@@ -7,6 +7,17 @@ from app.services.tkgm_service import resolve_coordinates_with_fallback
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
+from app.services.location_verification_service import audit_single_project_location, audit_all_projects_in_db
+
+@router.get("/location-audit-all")
+async def audit_all_locations(db: aiosqlite.Connection = Depends(get_db)):
+    """Run location self-check audit across all projects in the portfolio"""
+    try:
+        report = await audit_all_projects_in_db(db)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Konum denetimi hatası: {str(e)}")
+
 @router.get("")
 async def get_projects(db: aiosqlite.Connection = Depends(get_db)):
     async with db.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
@@ -141,6 +152,96 @@ async def resolve_project_coords(project_id: int, db: aiosqlite.Connection = Dep
 
 from app.services.image_gen_service import generate_project_visual
 from app.services.rag_service import generate_project_intelligence_report
+
+@router.get("/{project_id}/location-audit")
+async def get_single_location_audit(project_id: int, db: aiosqlite.Connection = Depends(get_db)):
+    """Run location self-check audit for a single project"""
+    async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        project = await cursor.fetchone()
+    if not project:
+        raise HTTPException(status_code=404, detail="Proje bulunamadı")
+        
+    audit_res = await audit_single_project_location(dict(project))
+    return audit_res
+
+@router.post("/{project_id}/update-location")
+async def update_project_location_pin(
+    project_id: int,
+    lat: float = Form(...),
+    lng: float = Form(...),
+    source: str = Form("Manuel Pinpoint Ayarlaması"),
+    db: aiosqlite.Connection = Depends(get_db)
+):
+    """Update project coordinates (e.g. from drag & drop map pin adjustment in UI)"""
+    async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        project = await cursor.fetchone()
+    if not project:
+        raise HTTPException(status_code=404, detail="Proje bulunamadı")
+        
+    proj_dict = dict(project)
+    proj_dict["lat"] = lat
+    proj_dict["lng"] = lng
+    proj_dict["location_source"] = source
+
+    audit_res = await audit_single_project_location(proj_dict)
+    
+    await db.execute("""
+        UPDATE projects 
+        SET lat = ?, lng = ?, location_source = ?, location_accuracy_score = ?, location_status = ?, reverse_geocoded_address = ?
+        WHERE id = ?
+    """, (lat, lng, source, audit_res["accuracy_score"], audit_res["status"], audit_res["reverse_address"], project_id))
+    await db.commit()
+    
+    return {
+        "message": "Proje konumu haritada başarıyla güncellendi ve doğrulandı",
+        "project_id": project_id,
+        "lat": lat,
+        "lng": lng,
+        "source": source,
+        "audit": audit_res
+    }
+
+@router.post("/{project_id}/auto-repair-location")
+async def auto_repair_location(project_id: int, db: aiosqlite.Connection = Depends(get_db)):
+    """Auto-repair project location using 5-Tier Fallback Engine & AI Agent"""
+    async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
+        project = await cursor.fetchone()
+    if not project:
+        raise HTTPException(status_code=404, detail="Proje bulunamadı")
+
+    p = dict(project)
+    coord_data = await resolve_coordinates_with_fallback(
+        ada=p.get("ada_no"),
+        parsel=p.get("parsel_no"),
+        il=p.get("il"),
+        ilce=p.get("ilce"),
+        mahalle=p.get("mahalle"),
+        location=p.get("location"),
+        project_name=p.get("name"),
+        description=p.get("description")
+    )
+    
+    p["lat"] = coord_data["lat"]
+    p["lng"] = coord_data["lng"]
+    p["location_source"] = f"AI Auto-Repair ({coord_data.get('source', 'Fallback')})"
+    p["tkgm_verified"] = coord_data.get("tkgm_verified", 0)
+
+    audit_res = await audit_single_project_location(p)
+
+    await db.execute("""
+        UPDATE projects 
+        SET lat = ?, lng = ?, tkgm_verified = ?, location_source = ?, location_accuracy_score = ?, location_status = ?, reverse_geocoded_address = ?
+        WHERE id = ?
+    """, (coord_data["lat"], coord_data["lng"], coord_data.get("tkgm_verified", 0), p["location_source"], audit_res["accuracy_score"], audit_res["status"], audit_res["reverse_address"], project_id))
+    await db.commit()
+
+    return {
+        "project_id": project_id,
+        "lat": coord_data["lat"],
+        "lng": coord_data["lng"],
+        "source": p["location_source"],
+        "audit": audit_res
+    }
 
 @router.get("/{project_id}/intelligence")
 async def get_project_intelligence(project_id: int, db: aiosqlite.Connection = Depends(get_db)):

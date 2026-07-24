@@ -51,9 +51,23 @@ async def create_tables(db: aiosqlite.Connection):
             ada_no VARCHAR(50),
             parsel_no VARCHAR(50),
             tkgm_verified INTEGER DEFAULT 0,
+            location_accuracy_score INTEGER DEFAULT 100,
+            location_status VARCHAR(50) DEFAULT 'verified',
+            location_source VARCHAR(255) DEFAULT 'System',
+            reverse_geocoded_address TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    for col_def in [
+        ("location_accuracy_score", "INTEGER DEFAULT 100"),
+        ("location_status", "VARCHAR(50) DEFAULT 'verified'"),
+        ("location_source", "VARCHAR(255) DEFAULT 'System'"),
+        ("reverse_geocoded_address", "TEXT")
+    ]:
+        try:
+            await db.execute(f"ALTER TABLE projects ADD COLUMN {col_def[0]} {col_def[1]}")
+        except Exception:
+            pass
     await db.execute("""
         CREATE TABLE IF NOT EXISTS units (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
