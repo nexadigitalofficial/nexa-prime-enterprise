@@ -418,14 +418,15 @@
                         <div style="font-size:11px; color:#10b981; margin-top:2px;">💰 Bütçe: ${l.budget || 'Belirtilmedi'}</div>
                         
                         <div style="display:flex; gap:5px; margin-top:10px;">
-                            <select onchange="updateLeadStage(${l.id}, this.value)" style="font-size:10px; padding:4px;">
+                            <select onchange="updateLeadStage(${l.id}, this.value)" style="font-size:10px; padding:4px; flex:1;">
                                 <option value="Yeni Talep" ${stage === 'Yeni Talep' ? 'selected' : ''}>🆕 Yeni Talep</option>
                                 <option value="İletişimde" ${stage === 'İletişimde' ? 'selected' : ''}>📞 İletişimde</option>
                                 <option value="Sunum Yapıldı" ${stage === 'Sunum Yapıldı' ? 'selected' : ''}>🏛️ Sunum Yapıldı</option>
                                 <option value="Teklif Verildi" ${stage === 'Teklif Verildi' ? 'selected' : ''}>📄 Teklif Verildi</option>
                                 <option value="Satış Kapandı" ${stage === 'Satış Kapandı' ? 'selected' : ''}>🤝 Satış Kapandı</option>
                             </select>
-                            <a href="https://wa.me/${l.phone ? l.phone.replace(/\D/g,'') : ''}" target="_blank" class="btn-action" style="padding:4px 8px; font-size:10px; background:#22c55e; color:#fff;"><i class="fa-brands fa-whatsapp"></i></a>
+                            <button onclick="evaluateSwarmLeadScore(${l.id})" class="btn-action" style="padding:4px 8px; font-size:10px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); color:#fff;" title="AI Lead Scoring Ajanını Çalıştır"><i class="fa-solid fa-robot"></i></button>
+                            <a href="https://wa.me/${l.phone ? l.phone.replace(/\D/g,'') : ''}" target="_blank" class="btn-action" style="padding:4px 8px; font-size:10px; background:#22c55e; color:#fff;" title="WhatsApp İletişim"><i class="fa-brands fa-whatsapp"></i></a>
                         </div>
                     `;
                     targetCol.appendChild(card);
@@ -547,6 +548,20 @@
             } catch(e) {
                 alert("Bağlantı hatası: " + e);
                 box.innerHTML = `<span style="color:#ef4444;">Sunucu Bağlantı Hatası</span>`;
+            }
+        }
+
+        async function evaluateSwarmLeadScore(leadId) {
+            try {
+                const res = await fetch(`/api/swarm/score-lead/${leadId}`, { method: 'POST' });
+                const data = await res.json();
+                const evalData = data.evaluation || {};
+                const recs = (evalData.action_recommendations || []).map(r => `  • ${r}`).join('\n');
+                
+                alert(`🤖 NEXA LEAD SCORING AJANI RAPORU\n\n🎯 Müşteri Skor: ${evalData.score || 85} / 100 (${evalData.tier || 'WARM LEAD'})\n\n📝 Özet Analiz:\n${evalData.summary || 'Aşama analizi tamamlandı.'}\n\n💡 Satış Danışmanı Aksiyon Tavsiyeleri:\n${recs}`);
+                loadCrmLeads();
+            } catch(e) {
+                alert("AI Lead Scoring analiz hatası: " + e);
             }
         }
     </script>

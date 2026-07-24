@@ -62,7 +62,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api import auth, projects, documents, chat, system, telegram, crm
+from app.api import auth, projects, documents, chat, system, telegram, crm, swarm
 
 # Register API Routers
 app.include_router(auth.router)
@@ -72,6 +72,7 @@ app.include_router(chat.router)
 app.include_router(system.router)
 app.include_router(telegram.router)
 app.include_router(crm.router)
+app.include_router(swarm.router)
 
 # Static files for documents & images
 if not os.path.exists("static"):
