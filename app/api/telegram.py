@@ -8,9 +8,12 @@ from app.services.telegram_service import telegram_manager
 
 router = APIRouter(prefix="/api/telegram", tags=["Telegram Bot"])
 
+# Master Admin PIN Key (Default: nexa2026, customizable via environment variable)
+ADMIN_PIN_KEY = os.getenv("NEXA_ADMIN_PIN", "nexa2026")
+
 @router.get("/status")
 async def get_telegram_bot_status():
-    """Get current status of Telegram Bot connection"""
+    """Get current public status of Telegram Bot connection"""
     me = await telegram_manager.get_me()
     return {
         "is_running": telegram_manager.is_running,
@@ -18,12 +21,23 @@ async def get_telegram_bot_status():
         "bot_info": me
     }
 
+@router.post("/verify-admin")
+async def verify_admin_pin(admin_pin: str = Form(...)):
+    """Verify Admin Security PIN Key"""
+    if admin_pin.strip() != ADMIN_PIN_KEY:
+        raise HTTPException(status_code=403, detail="🔒 Geçersiz Admin PIN Şifresi. Yetkisiz Erişim Engellendi!")
+    return {"status": "ok", "message": "✅ Admin yetkisi başarıyla doğrulandı."}
+
 @router.post("/configure")
 async def configure_telegram_bot(
     token: str = Form(...),
+    admin_pin: str = Form(...),
     db: aiosqlite.Connection = Depends(get_db)
 ):
-    """Set or update Telegram Bot Token and start long polling worker"""
+    """Set or update Telegram Bot Token (Protected by Admin PIN)"""
+    if admin_pin.strip() != ADMIN_PIN_KEY:
+        raise HTTPException(status_code=403, detail="🔒 Yetkisiz İşlem! Telegram API Token Değiştirmek İçin Geçerli Admin PIN Şifresi Gereklidir.")
+
     if not token or not token.strip():
         raise HTTPException(status_code=400, detail="Lütfen geçerli bir BotFather Token girin.")
 
@@ -31,7 +45,7 @@ async def configure_telegram_bot(
     me = await telegram_manager.get_me()
 
     if not me:
-        raise HTTPException(status_code=400, detail="Girdiğiniz Telegram Bot Token geçersiz veya API'ye ulaşılamadı. Lütfen BotFather'dan aldığınız token'ı kontrol edin.")
+        raise HTTPException(status_code=400, detail="Girdiğiniz Telegram Bot Token geçersiz veya Telegram API'ye ulaşılamadı. Lütfen BotFather'dan aldığınız token'ı kontrol edin.")
 
     # Save token to .env file for persistence
     try:
