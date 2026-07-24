@@ -6,6 +6,35 @@ from app.services.gemini_service import generate_content_with_fallback
 
 logger = logging.getLogger("nexa.ai_location_agent")
 
+ADA_PARSEL_PATTERNS = [
+    r'(\d{4,6})\s*ADA\s*(\d{1,4})\s*(?:VE\s*\d+\s*)?(?:SAYILI\s*)?PARSEL',
+    r'(\d{4,6})\s*ADA\s*,\s*(\d{1,4})\s*PARSEL',
+    r'ADA\s*:\s*(\d{4,6})\s*PARSEL\s*:\s*(\d{1,4})',
+    r'(\d{4,6})\s*/\s*(\d{1,4})'
+]
+
+def extract_ada_parsel_from_text(text: str) -> Optional[Dict]:
+    """
+    Scans document text, file names, contract titles, and text snippets 
+    for Ada/Parsel cadastral metadata (e.g. 190473 Ada 8 Parsel, 62879/2).
+    """
+    if not text:
+        return None
+        
+    for pattern in ADA_PARSEL_PATTERNS:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            ada = match.group(1)
+            parsel = match.group(2)
+            logger.info(f"📄 Extracted Cadastral Data from Document Text: Ada {ada}, Parsel {parsel}")
+            return {
+                "ada": ada,
+                "parsel": parsel,
+                "source": "Document Ada/Parsel OCR & Pattern Matching"
+            }
+            
+    return None
+
 async def research_project_location_with_ai(
     name: str,
     description: Optional[str] = None,
@@ -15,10 +44,24 @@ async def research_project_location_with_ai(
     mahalle: Optional[str] = None
 ) -> Optional[Dict]:
     """
-    AI Fallback Location Research Agent:
-    Uses Gemini LLM to analyze project metadata (name, description, address hints)
-    and infer precise neighborhood/district search query or estimated coordinates in Turkey.
+    AI Location Research Agent:
+    1. First scans description & location_hint for Ada/Parsel patterns.
+    2. Uses Gemini LLM to infer precise neighborhood/district search query or estimated coordinates in Turkey.
     """
+    # 1. Document / Description Cadastral Scan
+    combined_text = f"{name} {location_hint or ''} {description or ''}"
+    cadastral_found = extract_ada_parsel_from_text(combined_text)
+    if cadastral_found:
+        return {
+            "search_query": f"{ilce or ''} {mahalle or ''} {cadastral_found['ada']} Ada {cadastral_found['parsel']} Parsel {il or 'Ankara'}".strip(),
+            "ada": cadastral_found["ada"],
+            "parsel": cadastral_found["parsel"],
+            "confidence": "high",
+            "reasoning": "Resmi belgeden Ada/Parsel verisi çıkarıldı",
+            "source": cadastral_found["source"]
+        }
+
+    # 2. Gemini LLM Inference
     prompt = f"""
 Sen bir Türk gayrimenkul ve coğrafi konum uzmanı AI Agent'ısın.
 Aşağıda bilgileri verilen gayrimenkul projesinin konumunu (mahalle, ilçe, il veya simge yapı) analiz et ve Türkiye haritasındaki en yakın yerini belirle.
@@ -32,7 +75,7 @@ Açıklama / Metin:
 {description or 'Açıklama bulunmuyor.'}
 
 Görev:
-Proje adından (örn. 'VIP ÜNİVERSİTE', 'GRANDE YAŞAMKENT', 'WM PRIME'), açıklamadaki ipuçlarından veya il/ilçe bilgisinden yola çıkarak OpenStreetMap Nominatim araması için en doğru Türkçe adresi çıkar.
+Proje adından (örn. 'VIP ÜNİVERSİTE', 'GRANDE YAŞAMKENT', 'START BRAVO IDEA'), açıklamadaki ipuçlarından veya il/ilçe bilgisinden yola çıkarak OpenStreetMap veya TKGM araması için en doğru Türkçe adresi çıkar.
 
 Çıktıyı YALNIZCA geçerli bir JSON nesnesi olarak döndür:
 {{
@@ -46,7 +89,6 @@ Proje adından (örn. 'VIP ÜNİVERSİTE', 'GRANDE YAŞAMKENT', 'WM PRIME'), aç
         if not response_text:
             return None
 
-        # Clean JSON markdown if wrapped in ```json ... ```
         cleaned = re.sub(r'```json\s*|\s*```', '', response_text).strip()
         data = json.loads(cleaned)
         
