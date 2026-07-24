@@ -16,7 +16,10 @@ import os
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
-from app.api import auth, projects, documents, chat, system
+from app.api import auth, projects, documents, chat, system, telegram
+from app.services.telegram_service import telegram_manager
+from app.core.database import get_db
+import asyncio
 
 # Setup logging
 logging.basicConfig(
@@ -30,9 +33,18 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting NEXA PRIME Enterprise Server v2.0...")
     await init_db()
+    
+    # Auto-start Telegram Bot Polling if token is set in env
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if token:
+        telegram_manager.set_token(token)
+        asyncio.create_task(telegram_manager.start_polling(get_db))
+
     yield
     # Shutdown
     logger.info("🛑 Shutting down server...")
+    if telegram_manager.is_running:
+        telegram_manager.stop()
     await close_db()
 
 app = FastAPI(
@@ -56,6 +68,7 @@ app.include_router(projects.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(system.router)
+app.include_router(telegram.router)
 
 # Static files for documents & images
 if not os.path.exists("static"):
