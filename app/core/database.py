@@ -90,11 +90,25 @@ async def create_tables(db: aiosqlite.Connection):
             email VARCHAR(255),
             interested_units TEXT,
             notes TEXT,
+            stage VARCHAR(50) DEFAULT 'Yeni Talep',
+            budget VARCHAR(100) DEFAULT 'Belirtilmedi',
+            assigned_agent VARCHAR(100) DEFAULT 'Yönetici',
+            firebase_synced INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_contact TIMESTAMP,
             UNIQUE(project_id, phone)
         )
     """)
+    for col_def in [
+        ("stage", "VARCHAR(50) DEFAULT 'Yeni Talep'"),
+        ("budget", "VARCHAR(100) DEFAULT 'Belirtilmedi'"),
+        ("assigned_agent", "VARCHAR(100) DEFAULT 'Yönetici'"),
+        ("firebase_synced", "INTEGER DEFAULT 0")
+    ]:
+        try:
+            await db.execute(f"ALTER TABLE customers ADD COLUMN {col_def[0]} {col_def[1]}")
+        except Exception:
+            pass
     await db.execute("""
         CREATE TABLE IF NOT EXISTS sales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

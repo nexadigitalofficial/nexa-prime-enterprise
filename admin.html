@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXA PRIME — Yönetici Paneli & Gayrimenkul CRM</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #d4af37; /* Metallic Gold */
+            --primary-dark: #aa8c2c;
+            --accent: #facc15;
+            --bg-dark: #070b14;
+            --bg-card: rgba(15, 23, 42, 0.7);
+            --glass-bg: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(212, 175, 55, 0.25);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Top Header */
+        header {
+            padding: 15px 30px;
+            background: rgba(7, 11, 20, 0.9);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Main Container */
+        .admin-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        /* Tabs Navigation */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        .admin-tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-tab.active, .admin-tab:hover {
+            background: var(--primary);
+            color: #070b14;
+        }
+
+        /* Login Screen Overlay */
+        #loginScreen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #0f172a 0%, #070b14 100%);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            padding: 35px;
+            text-align: center;
+        }
+
+        /* Kanban Board */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            overflow-x: auto;
+        }
+        .kanban-col {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 15px;
+            min-height: 500px;
+        }
+        .kanban-header {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+        }
+        .lead-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: transform 0.2s ease;
+        }
+        .lead-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #070b14;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ADMIN LOGIN OVERLAY -->
+    <div id="loginScreen">
+        <div class="glass-card login-box">
+            <div style="font-size: 40px; color: var(--primary); margin-bottom: 10px;"><i class="fa-solid fa-user-shield"></i></div>
+            <h2 style="color:var(--primary); margin-bottom: 5px;">NEXA Yönetici Girişi</h2>
+            <p style="color:var(--text-muted); font-size:12px; margin-bottom:20px;">Lütfen Admin Güvenlik Şifrenizi (PIN) girin.</p>
+            
+            <input type="password" id="adminPinLoginInput" placeholder="Admin PIN (Varsayılan: nexa2026)">
+            <button onclick="attemptAdminLogin()" class="btn-action" style="width:100%; margin-top:15px; padding:12px; justify-content:center; font-size:14px;">
+                <i class="fa-solid fa-lock-open"></i> Sisteme Giriş Yap
+            </button>
+            <div id="loginError" style="color:#ef4444; font-size:12px; margin-top:10px; display:none;"></div>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN INTERFACE -->
+    <header>
+        <div class="logo-title">
+            <i class="fa-solid fa-building-shield"></i> NEXA PRIME — Yönetici Paneli & Gayrimenkul CRM
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <a href="/" target="_blank" style="color:var(--primary); text-decoration:none; font-size:13px; font-weight:700;"><i class="fa-solid fa-globe"></i> Ana Portala Git</a>
+            <button onclick="logoutAdmin()" class="btn-action" style="background:#ef4444; color:#fff;"><i class="fa-solid fa-power-off"></i> Çıkış</button>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchAdminTab('crm')"><i class="fa-solid fa-users"></i> Müşteri CRM Pipeline</div>
+            <div class="admin-tab" onclick="switchAdminTab('firebase')"><i class="fa-solid fa-fire"></i> Firebase Bulut Senkronizasyon</div>
+            <div class="admin-tab" onclick="switchAdminTab('telegram')"><i class="fa-brands fa-telegram"></i> Telegram Bot Ayarları</div>
+            <div class="admin-tab" onclick="switchAdminTab('system')"><i class="fa-solid fa-gears"></i> Sistem & Yapay Zeka Ayarları</div>
+        </div>
+
+        <!-- TAB 1: CRM PIPELINE (KANBAN BOARD) -->
+        <div id="tab-crm" class="tab-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="color:#fff;">📊 Müşteri & Satış Pipeline (Kanban Panosu)</h3>
+                <button onclick="openNewLeadModal()" class="btn-action" style="background:linear-gradient(135deg, #10b981, #047857); color:#fff;"><i class="fa-solid fa-user-plus"></i> Yeni Müşteri Ekle</button>
+            </div>
+
+            <div class="kanban-board">
+                <div class="kanban-col">
+                    <div class="kanban-header" style="border-color:#3b82f6;">🆕 YENİ TALEP <span id="count-new">0</span></div>
+                    <div id="col-new"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-header" style="border-color:#eab308;">📞 İLETİŞİMDE <span id="count-contact">0</span></div>
+                    <div id="col-contact"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-header" style="border-color:#8b5cf6;">🏛️ SUNUM YAPILDI <span id="count-presentation">0</span></div>
+                    <div id="col-presentation"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-header" style="border-color:#f97316;">📄 TEKLİF VERİLDİ <span id="count-proposal">0</span></div>
+                    <div id="col-proposal"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-header" style="border-color:#10b981;">🤝 SATIŞ KAPANDI <span id="count-closed">0</span></div>
+                    <div id="col-closed"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: FIREBASE CLOUD SYNC -->
+        <div id="tab-firebase" class="tab-pane" style="display:none;">
+            <div class="glass-card" style="padding:25px; max-width:700px; margin:0 auto;">
+                <h3 style="color:#f97316; margin-bottom:15px; display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-fire"></i> Firebase Realtime & Firestore Senkronizasyonu</h3>
+                <p style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">Sistemdeki tüm müşteri kayıtlarını ve satış fırsatlarını tek tıkla canlı Firebase bulut veritabanınızla senkronize edin.</p>
+                
+                <label style="font-size:12px; color:#cbd5e1;">Firebase Realtime Database URL:</label>
+                <input type="text" id="firebaseDbUrlInput" placeholder="https://nexaprime-default-rtdb.firebaseio.com">
+                
+                <div id="firebaseSyncStatus" style="font-size:12px; margin-top:15px; color:#94a3b8;">Status: Bekleniyor</div>
+
+                <button onclick="triggerFirebaseSync()" class="btn-action" style="width:100%; margin-top:15px; padding:12px; background:linear-gradient(135deg, #f97316, #c2410c); color:#fff; font-size:14px; justify-content:center;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Firebase ile Müşterileri Senkronize Et
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 3: TELEGRAM BOT SETTINGS -->
+        <div id="tab-telegram" class="tab-pane" style="display:none;">
+            <div class="glass-card" style="padding:25px; max-width:700px; margin:0 auto;">
+                <h3 style="color:#38bdf8; margin-bottom:15px; display:flex; align-items:center; gap:10px;"><i class="fa-brands fa-telegram"></i> Telegram Bot & API Ayarları</h3>
+                
+                <label style="font-size:12px; color:#cbd5e1;">Telegram Bot HTTP API Token (BotFather):</label>
+                <input type="text" id="adminTelegramTokenInput" placeholder="789123456:AAFx_xxxxxx...">
+
+                <div id="adminTelegramStatus" style="font-size:12px; margin-top:15px; color:#94a3b8;">Status: Kontrol ediliyor...</div>
+
+                <button onclick="saveAdminTelegramToken()" class="btn-action" style="width:100%; margin-top:15px; padding:12px; background:linear-gradient(135deg, #0284c7, #0369a1); color:#fff; font-size:14px; justify-content:center;">
+                    <i class="fa-solid fa-floppy-disk"></i> Telegram Token'ı Kaydet & Botu Başlat
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 4: SYSTEM & AI SETTINGS -->
+        <div id="tab-system" class="tab-pane" style="display:none;">
+            <div class="glass-card" style="padding:25px; max-width:700px; margin:0 auto;">
+                <h3 style="color:var(--primary); margin-bottom:15px; display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-brain"></i> Sistem & Cloud AI Ayarları</h3>
+                <div style="font-size:13px; color:#cbd5e1; line-height:1.8;">
+                    <p>• <b>Veritabanı Motoru:</b> SQLite Enterprise WAL Mode</p>
+                    <p>• <b>Yapay Zeka Modeli:</b> Google Gemini 3.5 Flash & Ollama Fallback</p>
+                    <p>• <b>Portföy Proje Sayısı:</b> 20 Proje (Tamamı Kadastro / Koordinat Teyitli)</p>
+                    <p>• <b>RAG Doküman Sayısı:</b> 171 Doküman & 89 Vector Chunks</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- NEW LEAD MODAL -->
+    <div id="newLeadModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3000; display:none; justify-content:center; align-items:center;">
+        <div class="glass-card" style="width:100%; max-width:500px; padding:25px;">
+            <h3 style="color:var(--primary); margin-bottom:15px;">➕ Yeni Müşteri & Fırsat Kaydı</h3>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <div>
+                    <label style="font-size:11px; color:#94a3b8;">Müşteri Ad Soyad:</label>
+                    <input type="text" id="newLeadName" placeholder="Örn: Mehmet Özkan">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8;">Telefon / WhatsApp:</label>
+                    <input type="text" id="newLeadPhone" placeholder="Örn: 0532 123 4567">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8;">İlgilendiği Proje:</label>
+                    <select id="newLeadProject"></select>
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8;">Bütçe Aralığı:</label>
+                    <input type="text" id="newLeadBudget" placeholder="Örn: 3.000.000 ₺ - 5.000.000 ₺">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8;">Müşteri Notları:</label>
+                    <textarea id="newLeadNotes" placeholder="Müşterinin özel istekleri..."></textarea>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button onclick="closeNewLeadModal()" class="btn-action" style="background:#64748b; color:#fff; flex:1; justify-content:center;">İptal</button>
+                    <button onclick="submitNewLead()" class="btn-action" style="flex:2; justify-content:center;">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAdminPin = "nexa2026";
+        let projectsList = [];
+
+        function attemptAdminLogin() {
+            const inputPin = document.getElementById('adminPinLoginInput').value.trim();
+            if(inputPin === currentAdminPin) {
+                document.getElementById('loginScreen').style.display = 'none';
+                initAdminDashboard();
+            } else {
+                const err = document.getElementById('loginError');
+                err.innerText = "❌ Geçersiz Admin PIN Şifresi!";
+                err.style.display = 'block';
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function switchAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        async function initAdminDashboard() {
+            await loadProjectsDropdown();
+            await loadCrmLeads();
+            await checkAdminTelegramStatus();
+        }
+
+        async function loadProjectsDropdown() {
+            try {
+                const res = await fetch('/api/projects');
+                projectsList = await res.json();
+                const sel = document.getElementById('newLeadProject');
+                sel.innerHTML = '';
+                projectsList.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = `#${p.id} ${p.name} (${p.ilce || 'Ankara'})`;
+                    sel.appendChild(opt);
+                });
+            } catch(e) {
+                console.error("Projects load failed:", e);
+            }
+        }
+
+        async function loadCrmLeads() {
+            try {
+                const res = await fetch('/api/crm/customers');
+                const leads = await res.json();
+                
+                const cols = {
+                    "Yeni Talep": document.getElementById('col-new'),
+                    "İletişimde": document.getElementById('col-contact'),
+                    "Sunum Yapıldı": document.getElementById('col-presentation'),
+                    "Teklif Verildi": document.getElementById('col-proposal'),
+                    "Satış Kapandı": document.getElementById('col-closed')
+                };
+
+                const counts = { "Yeni Talep": 0, "İletişimde": 0, "Sunum Yapıldı": 0, "Teklif Verildi": 0, "Satış Kapandı": 0 };
+
+                Object.values(cols).forEach(c => c.innerHTML = '');
+
+                leads.forEach(l => {
+                    const stage = l.stage || "Yeni Talep";
+                    if(counts[stage] !== undefined) counts[stage]++;
+
+                    const targetCol = cols[stage] || cols["Yeni Talep"];
+                    
+                    const card = document.createElement('div');
+                    card.className = 'lead-card';
+                    card.innerHTML = `
+                        <div style="font-weight:700; color:#fff; font-size:13.5px;">${l.name}</div>
+                        <div style="font-size:11px; color:var(--primary); font-weight:600;"><i class="fa-solid fa-building"></i> ${l.project_name || 'Genel Portföy'}</div>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:3px;"><i class="fa-solid fa-phone"></i> ${l.phone}</div>
+                        <div style="font-size:11px; color:#10b981; margin-top:2px;">💰 Bütçe: ${l.budget || 'Belirtilmedi'}</div>
+                        
+                        <div style="display:flex; gap:5px; margin-top:10px;">
+                            <select onchange="updateLeadStage(${l.id}, this.value)" style="font-size:10px; padding:4px;">
+                                <option value="Yeni Talep" ${stage === 'Yeni Talep' ? 'selected' : ''}>🆕 Yeni Talep</option>
+                                <option value="İletişimde" ${stage === 'İletişimde' ? 'selected' : ''}>📞 İletişimde</option>
+                                <option value="Sunum Yapıldı" ${stage === 'Sunum Yapıldı' ? 'selected' : ''}>🏛️ Sunum Yapıldı</option>
+                                <option value="Teklif Verildi" ${stage === 'Teklif Verildi' ? 'selected' : ''}>📄 Teklif Verildi</option>
+                                <option value="Satış Kapandı" ${stage === 'Satış Kapandı' ? 'selected' : ''}>🤝 Satış Kapandı</option>
+                            </select>
+                            <a href="https://wa.me/${l.phone ? l.phone.replace(/\D/g,'') : ''}" target="_blank" class="btn-action" style="padding:4px 8px; font-size:10px; background:#22c55e; color:#fff;"><i class="fa-brands fa-whatsapp"></i></a>
+                        </div>
+                    `;
+                    targetCol.appendChild(card);
+                });
+
+                document.getElementById('count-new').innerText = counts["Yeni Talep"];
+                document.getElementById('count-contact').innerText = counts["İletişimde"];
+                document.getElementById('count-presentation').innerText = counts["Sunum Yapıldı"];
+                document.getElementById('count-proposal').innerText = counts["Teklif Verildi"];
+                document.getElementById('count-closed').innerText = counts["Satış Kapandı"];
+
+            } catch(e) {
+                console.error("CRM leads fetch error:", e);
+            }
+        }
+
+        async function updateLeadStage(leadId, newStage) {
+            const formData = new FormData();
+            formData.append('stage', newStage);
+            try {
+                await fetch(`/api/crm/customers/${leadId}/stage`, { method: 'PUT', body: formData });
+                loadCrmLeads();
+            } catch(e) {
+                alert("Statü güncelleme hatası.");
+            }
+        }
+
+        function openNewLeadModal() {
+            document.getElementById('newLeadModal').style.display = 'flex';
+        }
+        function closeNewLeadModal() {
+            document.getElementById('newLeadModal').style.display = 'none';
+        }
+
+        async function submitNewLead() {
+            const name = document.getElementById('newLeadName').value.trim();
+            const phone = document.getElementById('newLeadPhone').value.trim();
+            const projId = document.getElementById('newLeadProject').value;
+            const budget = document.getElementById('newLeadBudget').value.trim();
+            const notes = document.getElementById('newLeadNotes').value.trim();
+
+            if(!name || !phone) {
+                alert("Lütfen ad soyad ve telefon alanlarını doldurun.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('phone', phone);
+            formData.append('project_id', projId);
+            formData.append('budget', budget || 'Belirtilmedi');
+            formData.append('notes', notes || '');
+
+            try {
+                const res = await fetch('/api/crm/customers', { method: 'POST', body: formData });
+                if(res.ok) {
+                    closeNewLeadModal();
+                    loadCrmLeads();
+                } else {
+                    alert("Kayıt ekleme hatası.");
+                }
+            } catch(e) {
+                alert("Hata oluştu.");
+            }
+        }
+
+        async function checkAdminTelegramStatus() {
+            try {
+                const res = await fetch('/api/telegram/status');
+                const data = await res.json();
+                const box = document.getElementById('adminTelegramStatus');
+                if(data.has_token && data.bot_info) {
+                    box.innerHTML = `<span style="color:#22c55e; font-weight:700;"><i class="fa-solid fa-circle-check"></i> @${data.bot_info.username} Aktif & Bağlı!</span>`;
+                } else {
+                    box.innerHTML = `<span style="color:#eab308;"><i class="fa-solid fa-triangle-exclamation"></i> Token Girilmedi</span>`;
+                }
+            } catch(e){}
+        }
+
+        async function saveAdminTelegramToken() {
+            const token = document.getElementById('adminTelegramTokenInput').value.trim();
+            if(!token) return alert("Lütfen token girin.");
+            
+            const formData = new FormData();
+            formData.append('token', token);
+            formData.append('admin_pin', currentAdminPin);
+
+            try {
+                const res = await fetch('/api/telegram/configure', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    alert("✅ Telegram botu başarıyla bağlandı!");
+                    checkAdminTelegramStatus();
+                } else {
+                    alert("Hata: " + data.detail);
+                }
+            } catch(e){ alert("Sunucu hatası."); }
+        }
+
+        async function triggerFirebaseSync() {
+            const url = document.getElementById('firebaseDbUrlInput').value.trim();
+            if(!url) return alert("Lütfen Firebase DB URL girin.");
+
+            const box = document.getElementById('firebaseSyncStatus');
+            box.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Firebase ile senkronize ediliyor...`;
+
+            const formData = new FormData();
+            formData.append('firebase_url', url);
+
+            try {
+                const res = await fetch('/api/crm/firebase-sync', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(res.ok) {
+                    alert(data.message);
+                    box.innerHTML = `<span style="color:#10b981; font-weight:700;">✅ ${data.synced_count} Müşteri Firebase ile senkronize!</span>`;
+                } else {
+                    alert("Hata: " + data.detail);
+                    box.innerHTML = `<span style="color:#ef4444;">Senkronizasyon Başarısız</span>`;
+                }
+            } catch(e) {
+                alert("Bağlantı hatası.");
+            }
+        }
+    </script>
+</body>
+</html>

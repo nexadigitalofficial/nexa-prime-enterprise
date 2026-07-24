@@ -62,6 +62,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.api import auth, projects, documents, chat, system, telegram, crm
+
 # Register API Routers
 app.include_router(auth.router)
 app.include_router(projects.router)
@@ -69,6 +71,7 @@ app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(system.router)
 app.include_router(telegram.router)
+app.include_router(crm.router)
 
 # Static files for documents & images
 if not os.path.exists("static"):
@@ -78,6 +81,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def serve_portal():
     response = FileResponse("portal.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+@app.get("/admin")
+async def serve_admin():
+    response = FileResponse("admin.html")
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
