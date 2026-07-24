@@ -102,16 +102,59 @@ Sisteminizde kayıtlı **{len(projects)} adet premium proje** bulunmaktadır:
 *Not: Detaylı AI fiyat ve teslimat analizleri için birkaç dakika sonra sorunuzu tekrarlayabilirsiniz.*
 """
 
+async def fetch_proximity_geo_intelligence(il: str, ilce: str, mahalle: str, proj_name: str) -> str:
+    """Agent: Researches regional location, transit, universities, hospitals, and highway axes for a specific neighborhood"""
+    location_str = f"{mahalle or ''} {ilce or ''} {il or ''}".strip()
+    if not location_str:
+        return ""
+
+    prompt = f"""
+Sen NEXA PRIME Sisteminin Otonom Bölgesel Konum & Çevre Aksı Araştırma Ajanısın (Geo-Intelligence Agent).
+Aşağıdaki lokasyon için Türkiye coğrafi ve şehir planlama bilgini kullanarak ulaşım, üniversite, hastane, metro/tramvay, otoyol ve gelişen aks bilgilerini 3 maddede özetle:
+
+Proje: {proj_name}
+Lokasyon: {location_str}
+
+GÖREVİN:
+- En yakın Üniversiteler ve Eğitim Aksı
+- En yakın Hastane ve Sağlık Merkezleri (Şehir Hastanesi vb.)
+- En yakın Tramvay/Metro/Otobüs ve Otoyol Ulaşım Aksları
+- Bölgenin yatırım ve prim gelişim potansiyeli
+
+Özetini kısa, şık ve maddeler halinde yaz. Dokümanda yer almasa bile coğrafi lokasyonu bildiğin için bölgenin gerçek ulaşım ağlarını anlat.
+"""
+    try:
+        res = generate_content_with_fallback("gemini-3.5-flash", prompt)
+        return res
+    except Exception as e:
+        logger.warning(f"Geo intelligence lookup failed: {e}")
+        return ""
+
 async def generate_cognitive_response(db: aiosqlite.Connection, user_message: str, project_id: Optional[int] = None) -> str:
     """
     Generate cognitive sales/RAG response using Gemini LLM with Multi-Model & Local Fallback.
     """
+    location_keywords = ["ulaşım", "aks", "yakınlık", "nerede", "çevre", "hastane", "okul", "üniversite", "metro", "tramvay", "otoyol", "havalimanı", "avm", "konum", "mesafe", "bölge", "site"]
+    is_location_query = any(kw in user_message.lower() for kw in location_keywords)
+
     if project_id:
         project_name = f"Proje ID #{project_id}"
-        async with db.execute("SELECT name FROM projects WHERE id = ?", (project_id,)) as cursor:
+        geo_intel_context = ""
+        async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as cursor:
             proj = await cursor.fetchone()
             if proj:
-                project_name = proj["name"]
+                p_dict = dict(proj)
+                project_name = p_dict["name"]
+                
+                # Run ProximityWebIntelligenceAgent if asking about location/transit
+                if is_location_query or not await get_project_context(db, project_id):
+                    geo_intel_context = await fetch_proximity_geo_intelligence(
+                        p_dict.get("il") or "",
+                        p_dict.get("ilce") or "",
+                        p_dict.get("mahalle") or "",
+                        project_name
+                    )
+
         context = await get_project_context(db, project_id)
         
         system_prompt = f"""
@@ -120,16 +163,20 @@ Sorulan soruya son derece profesyonel, elit, ikna edici ve karizmatik bir dille 
 
 İncelenen Tekil Proje: {project_name}
 
-Mevcut Proje Doküman ve Bilgi Bağlamı:
+Mevcut Proje Doküman ve Bilgi Bağlamı (RAG):
 {context if context else 'Bu proje için özel döküman bağlamı yüklenmemiş, ancak genel portföy bilgisi mevcuttur.'}
+
+CANLI COĞRAFİ LOKASYON & AKS İNTELLEGENCE (NEXA GEO-INTELLIGENCE AGENT):
+{geo_intel_context if geo_intel_context else 'Coğrafi aks sorgusu doğrudan dokümandan yanıtlanacaktır.'}
 
 Kullanıcı Sorusu: {user_message}
 
 Yanıt Kuralları:
 1. Yanıtın resmi, güven verici ve yatırımcıya prestij hissettiren bir tonda olsun.
 2. Eğer dökümanda fiyat, teslim tarihi, metrekare veya ödeme planı varsa net rakamlarla ver.
-3. Çıkarımda bulunurken kesinlik ve veri vurgusu yap ("Tahmin etmiyoruz, kodluyoruz").
-4. Yanıtı markdown formatında (tablo/liste gerekiyorsa kullanarak) sun.
+3. KULLANICI ULAŞIM VEYA ÇEVRE AKSLARINI SORDUĞUNDA: Dokümanda spesifik metre/km yazmasa bile yukarıdaki CANLI COĞRAFİ LOKASYON & AKS İNTELLEGENCE verisini kullanarak bölgedeki tramvay, hastane, üniversite ve otoyol akslarını detaylıca açıkla! Sakın "dokümanda yazmıyor, cevap veremem" deme; konum bilgisinden hareketle bölgenin çevre akslarını anlat.
+4. Çıkarımda bulunurken kesinlik ve veri vurgusu yap ("Tahmin etmiyoruz, kodluyoruz").
+5. Yanıtı markdown formatında (tablo/liste gerekiyorsa kullanarak) sun.
 """
     else:
         # Global Portfolio Chat Mode across ALL projects!
@@ -138,7 +185,7 @@ Yanıt Kuralları:
 Sen NEXA PRIME — Bilişsel Gayrimenkul Ekosistemi'nin Baş Portföy & Yatırım Stratejisti AI Danışmanısın.
 Görevin: Tüm portföydeki projeleri çapraz analiz ederek kullanıcının genel gayrimenkul sorularına yanıt vermek.
 
-Ö ÖRN. SORULAR VE YANIT STRATEJİLERİ:
+ÖRN. SORULAR VE YANIT STRATEJİLERİ:
 - "En yakın bitecek / teslim edilecek proje hangisi?" -> Dokümanlardaki ve açıklamalardaki teslimat tarihlerini kıyasla.
 - "En ucuz / en uygun fiyatlı proje hangisi?" -> Dokümanlardaki fiyat listelerini ve m² birim fiyatlarını kıyasla.
 - "Hangi şehirde kaç projemiz var?" -> Lokasyon bazlı döküm ve özet çıkar.
