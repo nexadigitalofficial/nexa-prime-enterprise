@@ -975,6 +975,7 @@
 
             <button class="global-chat-btn" onclick="openCompareModal()" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid var(--primary); color: #ffffff;"><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Proje Karşılaştır</button>
             <button class="global-chat-btn" onclick="openLocationAuditModal()" style="background: linear-gradient(135deg, #059669, #047857); border: 1px solid #10b981; color: #ffffff;"><i class="fa-solid fa-shield-halved"></i> 📍 Konum Denetimi</button>
+            <button class="global-chat-btn" onclick="toggleKioskPresentationMode()" style="background: linear-gradient(135deg, #7c3aed, #5b21b6); border: 1px solid #a78bfa; color: #ffffff;"><i class="fa-solid fa-tv"></i> 📺 Sunum Modu</button>
             <button class="global-chat-btn" onclick="openGlobalChatModal()"><i class="fa-solid fa-robot"></i> Genel Portföy Danışmanı</button>
         </div>
         <div class="filter-chips">
@@ -1118,7 +1119,7 @@
                             <button class="action-btn" id="btnAiLibrary" onclick="openAiVisualLibraryModal()" title="Üretilen tüm 3D mimari görselleri açar" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #d4af37, #b45309); font-weight:700; display:none;"><i class="fa-solid fa-photo-film"></i> Görsel Kitaplığı (<span id="aiLibCount">0</span>)</button>
                             <button class="action-btn" onclick="generatePdfBrochure()" title="Şık PDF Broşür Sunumu Üretir" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #2563eb, #1d4ed8); font-weight:700;"><i class="fa-solid fa-file-pdf"></i> Kurumsal PDF Broşür</button>
                             <button class="action-btn" onclick="openLocationAuditForCurrentProject()" title="Konum Hassasiyeti ve Self-Check Analizi" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #047857, #065f46); font-weight:700;"><i class="fa-solid fa-location-crosshairs"></i> Konum Self-Check</button>
-                            <button class="action-btn" id="btnPinDrag" onclick="toggleMapPinDragging()" title="Haritadaki İğneyi Elle Sürükleyip Konumlandırın" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #d97706, #b45309); font-weight:700;"><i class="fa-solid fa-map-pin"></i> İğneyi Elle Düzelt</button>
+                            <button class="action-btn" onclick="openWhatsappQuoteModal()" title="1-Tıkla Müşteriye Özel WhatsApp Teklifi Oluşturur" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #22c55e, #15803d); font-weight:700;"><i class="fa-brands fa-whatsapp"></i> WhatsApp Teklifi</button>
                             <button class="download-all-btn" onclick="downloadAllDocuments()"><i class="fa-solid fa-download"></i> Tümünü İndir</button>
                         </div>
                     </div>
@@ -1320,6 +1321,39 @@
                         <!-- Injected dynamically -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHATSAPP VIP PROPOSAL MODAL -->
+    <div id="whatsappQuoteModal" class="modal" style="z-index: 3100; display:none;">
+        <div class="modal-content glass-card" style="max-width: 550px; padding: 25px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(34,197,94,0.3); padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color:#22c55e; margin:0; font-size:1.4rem; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-brands fa-whatsapp"></i> 1-Tıkla Müşteriye Özel WhatsApp Teklifi
+                </h3>
+                <button class="close-btn" onclick="closeWhatsappQuoteModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <div>
+                    <label style="font-size:12px; color:#cbd5e1;">Müşteri Adı / Unvanı:</label>
+                    <input type="text" id="quoteCustomerName" placeholder="Örn: Sayın Ahmet Yılmaz" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-top:4px;">
+                </div>
+                <div>
+                    <label style="font-size:12px; color:#cbd5e1;">Seçilen Daire Tipi & Detay:</label>
+                    <input type="text" id="quoteUnitDetail" placeholder="Örn: 2+1 Lüks Daire (85 m²)" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-top:4px;">
+                </div>
+                <div>
+                    <label style="font-size:12px; color:#cbd5e1;">Anlaşılan Özel Fiyat:</label>
+                    <input type="text" id="quotePrice" placeholder="Örn: 3.500.000 TL" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-top:4px;">
+                </div>
+                <div>
+                    <label style="font-size:12px; color:#cbd5e1;">Ödeme Planı Notu:</label>
+                    <input type="text" id="quotePaymentPlan" placeholder="Örn: %50 Peşin, 24 Ay Taksit" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-top:4px;">
+                </div>
+                <button onclick="sendWhatsappQuoteToClient()" style="width:100%; margin-top:10px; padding:12px; border-radius:10px; background:linear-gradient(135deg, #22c55e, #15803d); color:#fff; border:none; font-weight:800; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> WhatsApp Teklif Mesajını Başlat
+                </button>
             </div>
         </div>
     </div>
@@ -2516,6 +2550,63 @@
                         }
                     }
                 });
+            }
+        // --- WhatsApp Proposal Generator ---
+        function openWhatsappQuoteModal() {
+            if(!currentProjectId) return;
+            const modal = document.getElementById('whatsappQuoteModal');
+            document.getElementById('quoteCustomerName').value = '';
+            document.getElementById('quoteUnitDetail').value = '2+1 Daire (Standart m²)';
+            document.getElementById('quotePrice').value = document.getElementById('overlayProjectPrice').innerText || 'Fiyat Alınız';
+            document.getElementById('quotePaymentPlan').value = '%50 Peşinat, 24 Ay Vade Seçeneği';
+            
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('open'), 10);
+        }
+
+        function closeWhatsappQuoteModal() {
+            const modal = document.getElementById('whatsappQuoteModal');
+            modal.classList.remove('open');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
+
+        function sendWhatsappQuoteToClient() {
+            const custName = document.getElementById('quoteCustomerName').value || 'Sayın Değerli Müşterimiz';
+            const unitDet = document.getElementById('quoteUnitDetail').value || 'Özel Daire';
+            const price = document.getElementById('quotePrice').value || 'Detaylı Bilgi Alınız';
+            const payPlan = document.getElementById('quotePaymentPlan').value || 'Esnek Ödeme';
+            const projName = document.getElementById('overlayProjectTitle').innerText || 'NEXA PRIME Lüks Projesi';
+
+            const msgText = `🏛️ *NEXA PRIME — ÖZEL PORTFÖY VE YATIRIM TEKLİFİ*\n\n${custName},\n\n*${projName}* projemiz için hazırladığımız özel yatırım teklif detayları aşağıdadır:\n\n🏡 *Seçilen Konut:* ${unitDet}\n💰 *Özel Yatırım Tutarı:* ${price}\n💳 *Ödeme Koşulları:* ${payPlan}\n\n📍 *Resmi Tapu & Konum Doğrulaması:* TKGM Kadastro Onaylıdır.\n\nİncelemek ve detaylı broşürü indirmek için temsilcimizle iletişime geçebilirsiniz.\n\n*NEXA PRIME Ekosistemi*`;
+
+            const encoded = encodeURIComponent(msgText);
+            window.open(`https://wa.me/?text=${encoded}`, '_blank');
+            closeWhatsappQuoteModal();
+        }
+
+        // --- VIP Kiosk & Tablet Presentation Mode ---
+        let isKioskActive = false;
+        function toggleKioskPresentationMode() {
+            isKioskActive = !isKioskActive;
+            const topBar = document.querySelector('.top-container');
+            const kpiWidget = document.querySelector('.kpi-widget');
+            const sysStatus = document.querySelector('.system-status');
+            
+            if(isKioskActive) {
+                if(topBar) topBar.style.display = 'none';
+                if(kpiWidget) kpiWidget.style.display = 'none';
+                if(sysStatus) sysStatus.style.display = 'none';
+                alert("📺 VIP Kiosk & Saha Tablet Sunum Modu Açıldı!\n\nTam ekran harita ve 3D görseller aktif. Moddan çıkmak için ESC tuşuna basın veya sunum butonunu kullanın.");
+                if(document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(()=>{});
+                }
+            } else {
+                if(topBar) topBar.style.display = 'flex';
+                if(kpiWidget) kpiWidget.style.display = 'flex';
+                if(sysStatus) sysStatus.style.display = 'block';
+                if(document.exitFullscreen) {
+                    document.exitFullscreen().catch(()=>{});
+                }
             }
         }
 
