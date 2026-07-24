@@ -527,26 +527,26 @@
 
         async function triggerFirebaseSync() {
             const url = document.getElementById('firebaseDbUrlInput').value.trim();
-            if(!url) return alert("Lütfen Firebase DB URL girin.");
 
             const box = document.getElementById('firebaseSyncStatus');
-            box.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Firebase ile senkronize ediliyor...`;
+            box.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Tüm Sistem (20 Proje + Müşteri CRM Kayıtları) Firebase ile senkronize ediliyor...`;
 
             const formData = new FormData();
-            formData.append('firebase_url', url);
+            if(url) formData.append('firebase_url', url);
 
             try {
-                const res = await fetch('/api/crm/firebase-sync', { method: 'POST', body: formData });
+                const res = await fetch('/api/crm/firebase-sync-all', { method: 'POST', body: formData });
                 const data = await res.json();
                 if(res.ok) {
-                    alert(data.message);
-                    box.innerHTML = `<span style="color:#10b981; font-weight:700;">✅ ${data.synced_count} Müşteri Firebase ile senkronize!</span>`;
+                    alert("🔥 " + data.message);
+                    box.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${data.message}</span>`;
                 } else {
-                    alert("Hata: " + data.detail);
-                    box.innerHTML = `<span style="color:#ef4444;">Senkronizasyon Başarısız</span>`;
+                    alert("Hata: " + (data.detail || "Senkronizasyon başarısız."));
+                    box.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> ${data.detail || 'Senkronizasyon Başarısız'}</span>`;
                 }
             } catch(e) {
-                alert("Bağlantı hatası.");
+                alert("Bağlantı hatası: " + e);
+                box.innerHTML = `<span style="color:#ef4444;">Sunucu Bağlantı Hatası</span>`;
             }
         }
     </script>

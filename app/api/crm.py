@@ -116,30 +116,29 @@ async def delete_customer(customer_id: int, db: aiosqlite.Connection = Depends(g
     await db.commit()
     return {"status": "ok", "message": "✅ Müşteri silindi."}
 
-@router.post("/firebase-sync")
-async def sync_firebase_leads(
-    firebase_url: str = Form(...),
+from app.services.firebase_service import firebase_manager
+
+@router.get("/firebase-status")
+async def get_firebase_status():
+    """Check connection status with Firebase Realtime Database"""
+    res = await firebase_manager.test_connection()
+    return res
+
+@router.post("/firebase-sync-all")
+async def sync_all_firebase(
+    firebase_url: Optional[str] = Form(None),
     db: aiosqlite.Connection = Depends(get_db)
 ):
-    """Sync local SQLite CRM customer leads directly to Firebase Realtime Database"""
-    if not firebase_url or not firebase_url.startswith("http"):
-        raise HTTPException(status_code=400, detail="Lütfen geçerli bir Firebase Realtime DB URL'si girin (örn: https://your-app.firebaseio.com).")
-
-    endpoint = firebase_url.rstrip("/") + "/crm_leads.json"
-
-    async with db.execute("SELECT c.*, p.name as project_name FROM customers c LEFT JOIN projects p ON c.project_id = p.id") as cursor:
-        rows = await cursor.fetchall()
-
-    leads_data = {str(r["id"]): dict(r) for r in rows}
-
+    """Sync all 20 projects + CRM leads to Firebase in 1-click"""
+    if firebase_url and firebase_url.strip():
+        firebase_manager.configure(firebase_url)
+    
     try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            resp = await client.put(endpoint, json=leads_data)
-            if resp.status_code == 200:
-                await db.execute("UPDATE customers SET firebase_synced = 1")
-                await db.commit()
-                return {"status": "ok", "synced_count": len(leads_data), "message": f"🔥 {len(leads_data)} Müşteri kaydı Firebase Firestore/Realtime DB ile senkronize edildi!"}
-            else:
-                raise HTTPException(status_code=resp.status_code, detail=f"Firebase API yanıtı: {resp.text}")
+        res = await firebase_manager.sync_all(db)
+        return {
+            "status": "ok",
+            "message": f"🔥 Tesis Senkronize Edildi! {res['synced_projects']} Proje ve {res['synced_customers']} Müşteri Kaydı Firebase Buluta Aktarıldı.",
+            "data": res
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Firebase senkronizasyon hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Firebase Senkronizasyon Hatası: {e}")
