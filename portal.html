@@ -456,15 +456,41 @@
             object-fit: cover;
             border-radius: 12px;
         }
-        .compare-card select {
+        .compare-card select, .compare-grid select {
             width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid var(--glass-border);
-            color: #fff;
+            padding: 13px 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(7,11,20,0.98));
+            border: 1px solid rgba(212,175,55,0.35);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(212,175,55,0.08);
+            color: #ffffff;
             font-size: 14px;
+            font-weight: 600;
             outline: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .compare-card select:hover, .compare-grid select:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(212,175,55,0.35), inset 0 0 15px rgba(212,175,55,0.15);
+            transform: translateY(-1px);
+        }
+        .compare-card select:focus, .compare-grid select:focus {
+            border-color: #facc15;
+            box-shadow: 0 0 20px rgba(250,204,21,0.5);
+        }
+        .compare-card select option, .compare-grid select option {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         /* Executive KPI Widget (Top Right) */
@@ -2515,9 +2541,11 @@
             const selects = [document.getElementById('compareSelect1'), document.getElementById('compareSelect2'), document.getElementById('compareSelect3')];
             selects.forEach((select, idx) => {
                 if (!select) return;
-                select.innerHTML = '<option value="">-- Proje Seçin --</option>';
+                select.innerHTML = '<option value="">🏢 Lüks Proje Seçiniz...</option>';
                 allProjects.forEach(p => {
-                    select.innerHTML += `<option value="${p.id}">${p.name} (${p.il || 'Ankara'})</option>`;
+                    const loc = p.il ? p.il : (p.location || 'Ankara');
+                    const badge = p.tkgm_verified ? '✅ TKGM' : '👑 PRESTİJ';
+                    select.innerHTML += `<option value="${p.id}">${badge} | ${p.name} — (📍 ${loc})</option>`;
                 });
                 if (allProjects[idx]) {
                     select.value = allProjects[idx].id;
