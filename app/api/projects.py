@@ -57,13 +57,32 @@ async def get_project_detail(project_id: int, db: aiosqlite.Connection = Depends
     async with db.execute("SELECT COUNT(*) as count FROM sales WHERE customer_id IN (SELECT id FROM customers WHERE project_id = ?)", (project_id,)) as cursor:
         sales = await cursor.fetchone()
         
+    # For portfolio listings: exclude thumbnail/system images (thmb_, x5_, logo, blank, etbis, profile)
+    PORTFOLIO_EXCLUDE = [
+        'thmb_', 'x5_', 'logo.', 'blank_', 'etbis_', 'p200_profile',
+        'fafe09', 'p200_'
+    ]
+    is_portfolio_project = dict(project).get('is_portfolio', 0)
+
     async with db.execute("SELECT id, doc_type, title, file_url, category FROM documents WHERE project_id = ?", (project_id,)) as cursor:
-        docs = await cursor.fetchall()
-        
+        docs_raw = await cursor.fetchall()
+
+    docs = []
+    for d in docs_raw:
+        d_dict = dict(d)
+        furl = (d_dict.get('file_url') or '')
+        fname_lower = furl.split('/')[-1].lower()
+        # For portfolio listings: skip thumbnail and system files
+        if is_portfolio_project:
+            skip = any(fname_lower.startswith(pat) or pat in fname_lower for pat in PORTFOLIO_EXCLUDE)
+            if skip:
+                continue
+        docs.append(d_dict)
+
     return {
         **dict(project),
         "units": [dict(u) for u in units],
-        "documents": [dict(d) for d in docs],
+        "documents": docs,
         "stats": {
             "total_customers": customers["count"],
             "total_sales": sales["count"]
