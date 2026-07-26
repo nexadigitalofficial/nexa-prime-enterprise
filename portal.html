@@ -1614,8 +1614,8 @@
                     </div>
 
                     <div class="chat-footer-wrapper">
-                        <!-- Quick Question Chips -->
-                        <div class="chat-suggestions" style="margin-bottom:2px;">
+                        <!-- Quick Question Chips (dynamically updated per mode) -->
+                        <div class="chat-suggestions" style="margin-bottom:2px;" id="overlayChatSuggestions">
                             <button class="chat-suggestion-btn" onclick="sendProjectPrompt('📍 Ulaşım ve çevre aksı yakınlıkları nelerdir?')">📍 Ulaşım & Aks</button>
                             <button class="chat-suggestion-btn" onclick="sendProjectPrompt('📜 Projenin ada, parsel ve tapu durumu nedir?')">📜 Tapu Statüsü</button>
                             <button class="chat-suggestion-btn" onclick="sendProjectPrompt('💰 Tahmini prim potansiyeli ve ROI fizibilitesi nedir?')">💰 Prim & ROI</button>
@@ -1635,8 +1635,9 @@
             <div class="col-right">
                 <!-- Gallery -->
                 <div class="glass-card" style="padding: 0; overflow:hidden;" id="galleryContainer">
-                    <div style="padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3);">
-                        <h3 style="margin:0;"><i class="fa-solid fa-images"></i> Proje Görselleri</h3>
+                    <div style="padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:space-between;">
+                        <h3 style="margin:0;" id="galleryHeaderTitle"><i class="fa-solid fa-images"></i> Proje Görselleri</h3>
+                        <span id="galleryPhotoCount" style="font-size:11px; color:#94a3b8; background:rgba(255,255,255,0.05); padding:2px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); display:none;"></span>
                     </div>
                     <div class="swiper mySwiper">
                         <div class="swiper-wrapper" id="swiperWrapper">
@@ -1648,7 +1649,7 @@
                     </div>
                 </div>
 
-                <!-- Interactive Floor Plans & Unit Types -->
+                <!-- Interactive Floor Plans & Unit Types (hidden for portfolio listings) -->
                 <div class="glass-card" id="unitsSection" style="display:none; margin-bottom: 25px;">
                     <h3 style="margin-top:0; margin-bottom: 20px;"><i class="fa-solid fa-layer-group"></i> Daire Tipleri & Kat Planları</h3>
                     <div id="overlayUnitsContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">
@@ -1659,7 +1660,7 @@
                 <!-- Documents -->
                 <div class="glass-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
-                        <h3 style="margin:0;"><i class="fa-solid fa-file-contract"></i> Resmi Belgeler & Tablolar</h3>
+                        <h3 style="margin:0;" id="docsHeaderTitle"><i class="fa-solid fa-file-contract"></i> Resmi Belgeler & Tablolar</h3>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="action-btn" onclick="openRagModal()" title="Hafızaya Bilgi Ekle" style="border-radius:20px; padding: 8px 15px; width: auto;"><i class="fa-solid fa-plus"></i> Bilgi Ekle</button>
                             <button class="action-btn" onclick="generateProjectIntelligence()" title="Tüm belgeleri okuyarak derinlemesine rapor oluşturur" style="border-radius:20px; padding: 8px 15px; width: auto; background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-brain"></i> Proje Intelligence</button>
@@ -2461,6 +2462,17 @@
                     }
                 }
 
+                // ── Gallery title & photo count badge ──────────────────────
+                const galleryHeaderEl = document.getElementById('galleryHeaderTitle');
+                const galleryCountEl  = document.getElementById('galleryPhotoCount');
+                if (galleryHeaderEl) {
+                    if (project.is_portfolio) {
+                        galleryHeaderEl.innerHTML = '<i class="fa-solid fa-camera-retro" style="color:var(--primary);"></i> İlan Fotoğrafları & Görseller';
+                    } else {
+                        galleryHeaderEl.innerHTML = '<i class="fa-solid fa-images"></i> Proje Görselleri';
+                    }
+                }
+
                 const swiperWrapper = document.getElementById('swiperWrapper');
                 const galleryContainer = document.getElementById('galleryContainer');
                 swiperWrapper.innerHTML = '';
@@ -2468,6 +2480,7 @@
 
                 if(images.length > 0) {
                     galleryContainer.style.display = 'block';
+                    if (galleryCountEl) { galleryCountEl.textContent = `${images.length} Fotoğraf`; galleryCountEl.style.display = 'inline-block'; }
                     images.forEach((img, idx) => {
                         const slide = document.createElement('div');
                         slide.className = 'swiper-slide';
@@ -2488,6 +2501,7 @@
                         autoplay: { delay: 4000, disableOnInteraction: false }
                     });
                 } else {
+                    if (galleryCountEl) galleryCountEl.style.display = 'none';
                     galleryContainer.style.display = 'none';
                 }
 
@@ -2563,16 +2577,73 @@
                         docsContainer.appendChild(catDiv);
                     }
                     refreshFsLightbox();
-                } else {
-                    docsContainer.innerHTML = '<p style="color:#64748b; font-size:15px; font-style:italic;">Bu proje için belge bulunmamaktadır.</p>';
+                } // end if(docs.length > 0 || images.length > 0)
+
+                // ── Docs panel title (portfolio vs proje) ─────────────────
+                const docsHeaderEl = document.getElementById('docsHeaderTitle');
+                if (docsHeaderEl) {
+                    docsHeaderEl.innerHTML = project.is_portfolio
+                        ? '<i class="fa-solid fa-folder-open" style="color:var(--primary);"></i> İlan Belgesi & Fotoğraflar'
+                        : '<i class="fa-solid fa-file-contract"></i> Resmi Belgeler & Tablolar';
                 }
 
-                addBotMessage(`Size <b>${project.name}</b> projesi hakkında nasıl yardımcı olabilirim? Tüm resmi belge ve tablolar taranarak size cevap verilecektir.`, [
-                    "Fiyatlar nelerdir?",
-                    "Daire teslimi ne zaman?",
-                    "Proje nerede yer alıyor?",
-                    "Bana projeyi özetle"
-                ]);
+                // ── İlan yok mesajı ────────────────────────────────────────
+                if (docs.length === 0 && images.length === 0) {
+                    docsContainer.innerHTML = project.is_portfolio
+                        ? '<p style="color:#64748b; font-size:15px; font-style:italic;"><i class="fa-solid fa-folder-open" style="color:var(--primary); margin-right:6px;"></i>Bu ilan için henüz belge eklenmemiştir.</p>'
+                        : '<p style="color:#64748b; font-size:15px; font-style:italic;">Bu proje için belge bulunmamaktadır.</p>';
+                }
+
+                // ── AI Co-Pilot: portfolio-specific chip suggestions ───────
+                const suggestionsEl   = document.getElementById('overlayChatSuggestions');
+                const chatInputEl     = document.getElementById('overlayChatInput');
+
+                if (project.is_portfolio) {
+                    const isKiralik = project.listing_type === 'Kiralık';
+                    if (suggestionsEl) {
+                        suggestionsEl.innerHTML = isKiralik ? `
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu ofis ya da rezidansın aylık kira bedeli ve depozito koşulları nedir?')">💵 Kira & Depozito</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu ilan için ulaşım olanakları ve yakın hizmetler nelerdir?')">🚶 Ulaşım & Çevre</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Eşya durumu, ısınma sistemi ve net/brüt m² bilgileri nelerdir?')">🏠 Özellikler</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu mülkü kiralamak için gereken belgeler ve süreç nedir?')">📝 Kiralama Süreçi</button>
+                        ` : `
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu mülkün satış fiyatı m² bazında piyasayla karşılaştırıldığında nasıl?')">📊 Fiyat Analizi</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu mülkün tapu ve hukuki durumu nedir?')">📜 Tapu Durumu</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu mülkün yakınındaki altyapı ve sosyal çevre nedir?')">🌆 Çevre Analizi</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('Bu yatırım için kira getiri potansiyeli ve ROI tahmini nedir?')">💰 Yatırım ROI</button>
+                        `;
+                    }
+                    if (chatInputEl) chatInputEl.placeholder = `${project.name} ilanı hakkında sorularınızı sorun...`;
+
+                    addBotMessage(`
+🏚️ <b>${project.name}</b> ilanı inceleniyor.
+
+${project.is_portfolio && project.price_display ? `💰 Talep fiyatı: <b>${project.price_display}</b>${project.net_gross_area ? ' | ' + project.net_gross_area : ''}` : ''}
+
+Bu ilan hakkında her türlü sorunuzu yanıtlayabilirim — fiyat analizi, çevre değerlendirmesi, tapu durumu ve daha fazlası için RAG hafızasındaki belgeler taranacaktır.`, [
+                        isKiralik ? 'Kira bedeli ve depozito nedir?' : 'Satış fiyatı piyasaya uygun mu?',
+                        'Ulaşım ve çevre olanakları nedir?',
+                        'Mülkün hukuki durumu nedir?',
+                        'Bana bu ilanı özetle'
+                    ]);
+                } else {
+                    if (suggestionsEl) {
+                        suggestionsEl.innerHTML = `
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('📍 Ulaşım ve çevre aksı yakınlıkları nelerdir?')">📍 Ulaşım & Aks</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('📜 Projenin ada, parsel ve tapu durumu nedir?')">📜 Tapu Statüsü</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('💰 Tahmini prim potansiyeli ve ROI fizibilitesi nedir?')">💰 Prim & ROI</button>
+                            <button class="chat-suggestion-btn" onclick="sendProjectPrompt('🏛️ Mevcut daire tipleri ve metrekareler nelerdir?')">🏛️ Daire Tipleri</button>
+                        `;
+                    }
+                    if (chatInputEl) chatInputEl.placeholder = 'Bu projeyle ilgili her şeyi sorun veya sesli komut verin...';
+
+                    addBotMessage(`Size <b>${project.name}</b> projesi hakkında nasıl yardımcı olabilirim? Tüm resmi belge ve tablolar taranarak size cevap verilecektir.`, [
+                        "Fiyatlar nelerdir?",
+                        "Daire teslimi ne zaman?",
+                        "Proje nerede yer alıyor?",
+                        "Bana projeyi özetle"
+                    ]);
+                }
                 document.getElementById('projectOverlay').classList.add('open');
                 if(project.lat && project.lng) {
                     map.flyTo([project.lat, project.lng], 15, { duration: 1.5 });
