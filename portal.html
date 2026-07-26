@@ -125,19 +125,19 @@
 
         #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* Top Search Bar & Container */        .top-container {
+        /* Top Search Bar & Centered Container */
+        .top-container {
             position: absolute;
             top: 25px;
-            left: 30px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            align-items: center;
             gap: 12px;
-            width: calc(100% - 480px);
-            max-width: 960px;
-        }
-        @media (max-width: 1200px) {
-            .top-container { width: calc(100% - 60px); max-width: 100%; }
+            width: 92%;
+            max-width: 920px;
         }
         .top-bar {
             width: 100%;
@@ -169,10 +169,11 @@
         .top-bar input::placeholder { color: #94a3b8; }
         .top-bar i { color: var(--primary); font-size: 1.2rem; }
 
-        /* Touch & Horizontal Scrollable Action Carousel Strip */
+        /* Touch & Centered Horizontal Scrollable Action Carousel Strip */
         .action-strip-carousel {
             width: 100%;
             display: flex;
+            justify-content: center;
             gap: 10px;
             overflow-x: auto;
             padding: 4px 2px 8px 2px;
