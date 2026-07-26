@@ -461,6 +461,222 @@
             font-weight: 600;
         }
 
+        /* ══════════════════════════════════════════════════
+           PORTFOLIO İLAN CARDS PANEL
+        ══════════════════════════════════════════════════ */
+        #portfolioCardsPanel {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            padding: 16px 0 8px 0;
+            animation: fadeSlideIn 0.4s ease;
+        }
+        #portfolioCardsPanel.visible {
+            display: flex;
+        }
+        .portfolio-cards-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px 12px 4px;
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+            margin-bottom: 14px;
+        }
+        .portfolio-cards-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .portfolio-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-height: 450px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212,175,55,0.4) transparent;
+            padding-right: 4px;
+        }
+        .portfolio-cards-grid::-webkit-scrollbar { width: 4px; }
+        .portfolio-cards-grid::-webkit-scrollbar-track { background: transparent; }
+        .portfolio-cards-grid::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.4); border-radius: 4px; }
+
+        .ilan-card {
+            background: linear-gradient(135deg, rgba(10,16,30,0.95), rgba(15,23,42,0.90));
+            border: 1px solid rgba(212,175,55,0.18);
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+        .ilan-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 35px rgba(212,175,55,0.3);
+        }
+        .ilan-card-img {
+            width: 80px;
+            min-width: 80px;
+            background-size: cover;
+            background-position: center;
+            background-color: rgba(212,175,55,0.1);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .ilan-card-type-badge {
+            position: absolute;
+            top: 8px;
+            left: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 3px 7px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .ilan-card-type-badge.kiralik {
+            background: rgba(59,130,246,0.9);
+            color: #fff;
+        }
+        .ilan-card-type-badge.satilik {
+            background: rgba(34,197,94,0.9);
+            color: #070b14;
+        }
+        .ilan-card-body {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex: 1;
+            min-width: 0;
+        }
+        .ilan-card-name {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1.35;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ilan-card-loc {
+            font-size: 11px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ilan-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .ilan-card-price {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .ilan-card-info {
+            font-size: 10.5px;
+            color: #64748b;
+            background: rgba(255,255,255,0.05);
+            padding: 2px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+        .ilan-card-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 11px;
+            flex-shrink: 0;
+            transition: all 0.25s;
+        }
+        .ilan-card:hover .ilan-card-arrow {
+            background: var(--primary);
+            color: #070b14;
+            transform: translateX(2px);
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Portfolio overlay detail badges ── */
+        .ilan-overlay-meta-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 8px 0 4px 0;
+        }
+        .ilan-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(212,175,55,0.3);
+            background: rgba(212,175,55,0.08);
+            color: var(--primary);
+        }
+        .ilan-meta-chip.kiralik-chip {
+            border-color: rgba(59,130,246,0.4);
+            background: rgba(59,130,246,0.12);
+            color: #60a5fa;
+        }
+        .ilan-meta-chip.satilik-chip {
+            border-color: rgba(34,197,94,0.4);
+            background: rgba(34,197,94,0.12);
+            color: #4ade80;
+        }
+        .ilan-price-banner {
+            background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.06));
+            border: 1px solid rgba(212,175,55,0.35);
+            border-radius: 16px;
+            padding: 14px 20px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .ilan-price-banner-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .ilan-price-banner-value {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--primary);
+            font-family: 'Outfit', sans-serif;
+        }
+
         /* Project Comparison Matrix Modal */
         .compare-modal-content {
             width: 90%;
@@ -1333,6 +1549,17 @@
     <!-- Map Container -->
     <div id="map"></div>
 
+    <!-- PORTFOLIO İLAN CARDS PANEL (shown in Bireysel Portföylerim mode) -->
+    <div id="portfolioCardsPanel" class="system-status" style="bottom:30px; right:30px; left:auto; min-width:320px; max-width:360px; z-index:1000; position:absolute;">
+        <div class="portfolio-cards-header">
+            <h3><i class="fa-solid fa-house-user"></i> Bireysel Portföylerim</h3>
+            <span id="portfolioCountBadge" style="font-size:11px; color:#94a3b8; background:rgba(255,255,255,0.05); padding:2px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">10 İlan</span>
+        </div>
+        <div class="portfolio-cards-grid" id="portfolioCardsGrid">
+            <!-- Dynamically rendered ilan cards -->
+        </div>
+    </div>
+
     <!-- FULL SCREEN PROJECT OVERLAY -->
     <div class="project-overlay" id="projectOverlay">
         <div class="overlay-close" onclick="closeProjectOverlay()">
@@ -1353,8 +1580,24 @@
         <div class="overlay-body">
             <!-- Sol Sütun: Bilgi & AI -->
             <div class="col-left">
-                <div class="glass-card">
-                    <h3><i class="fa-solid fa-circle-info"></i> Proje Hakkında</h3>
+                <div class="glass-card" id="overlayInfoCard">
+                    <h3><i class="fa-solid fa-circle-info"></i> <span id="overlayInfoCardTitle">Proje Hakkında</span></h3>
+                    <!-- Portfolio meta bar (shown only for İlanlar) -->
+                    <div class="ilan-overlay-meta-bar" id="ilanMetaBar" style="display:none;">
+                        <div class="ilan-meta-chip" id="ilanListingTypeBadge">-</div>
+                        <div class="ilan-meta-chip" id="ilanCategoryBadge"><i class="fa-solid fa-tag"></i> -</div>
+                    </div>
+                    <!-- Portfolio price banner (shown only for İlanlar) -->
+                    <div class="ilan-price-banner" id="ilanPriceBanner" style="display:none;">
+                        <div>
+                            <div class="ilan-price-banner-label">Talep Fiyatı</div>
+                            <div class="ilan-price-banner-value" id="ilanPriceValue">-</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="ilan-price-banner-label" id="ilanAreaLabel">Alan</div>
+                            <div style="font-size:15px; font-weight:700; color:#cbd5e1;" id="ilanAreaValue">-</div>
+                        </div>
+                    </div>
                     <p id="overlayProjDesc" style="color: #cbd5e1; line-height: 1.8; font-size: 15.5px;"></p>
                 </div>
                 
@@ -1967,14 +2210,71 @@
         function applyCurrentEcosystemView() {
             if (!allProjects) return;
 
+            const cardsPanel = document.getElementById('portfolioCardsPanel');
+            const systemStatusPanel = document.querySelector('.system-status');
+
             let filtered = [];
             if (currentEcosystemMode === 'projeler') {
                 filtered = allProjects.filter(p => !p.is_portfolio || p.is_portfolio === 0);
+                if (cardsPanel) cardsPanel.classList.remove('visible');
             } else {
                 filtered = allProjects.filter(p => p.is_portfolio === 1);
+                if (cardsPanel) {
+                    cardsPanel.classList.add('visible');
+                    renderPortfolioCards(filtered);
+                }
             }
 
             renderMarkers(filtered);
+        }
+
+        function renderPortfolioCards(ilanlar) {
+            const grid = document.getElementById('portfolioCardsGrid');
+            const badge = document.getElementById('portfolioCountBadge');
+            if (!grid) return;
+            if (badge) badge.textContent = `${ilanlar.length} İlan`;
+
+            grid.innerHTML = '';
+
+            if (ilanlar.length === 0) {
+                grid.innerHTML = `<div style="color:#64748b; font-size:13px; text-align:center; padding:20px;">Bu kategoride ilan bulunamadı.</div>`;
+                return;
+            }
+
+            ilanlar.forEach(p => {
+                const isKiralik = p.listing_type === 'Kiralık';
+                const badgeClass = isKiralik ? 'kiralik' : 'satilik';
+                const badgeLabel = isKiralik ? '🔑 Kiralık' : '🏷️ Satılık';
+                const imgStyle = p.cover_image_url 
+                    ? `background-image:url('${encodeURI(p.cover_image_url)}');`
+                    : `background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(15,23,42,0.95));`;
+                
+                const icon = p.property_category 
+                    ? (p.property_category.includes('Arsa') ? '🚜' 
+                       : p.property_category.includes('Villa') ? '🏰'
+                       : p.property_category.includes('Ticari') ? '🏢'
+                       : '🏠') 
+                    : '🏠';
+
+                const cardEl = document.createElement('div');
+                cardEl.className = 'ilan-card';
+                cardEl.onclick = () => openProject(p.id);
+                cardEl.innerHTML = `
+                    <div class="ilan-card-img" style="${imgStyle}">
+                        <span class="ilan-card-type-badge ${badgeClass}">${badgeLabel}</span>
+                    </div>
+                    <div class="ilan-card-body">
+                        <div class="ilan-card-name">${icon} ${p.name}</div>
+                        <div class="ilan-card-loc"><i class="fa-solid fa-location-dot" style="color:#ef4444; font-size:9px;"></i> ${p.location || p.ilce || 'Ankara'}</div>
+                        <div class="ilan-card-meta">
+                            <span class="ilan-card-price">${p.price_display || '—'}</span>
+                            ${p.net_gross_area ? `<span class="ilan-card-info"><i class="fa-solid fa-ruler-combined" style="font-size:9px;"></i> ${p.net_gross_area}</span>` : ''}
+                            <span class="ilan-card-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(cardEl);
+            });
         }
 
         function renderMarkers(projectsToRender) {
@@ -2048,6 +2348,42 @@
                 document.getElementById('overlayProjLocation').innerHTML = `<i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> ${project.location}`;
                 document.getElementById('overlayProjDesc').innerHTML = project.description ? project.description.replace(/\n/g, '<br>') : "Bu prestijli proje için detaylı bilgiler yapay zeka tarafından analiz edilmektedir.";
                 
+                // ── Portfolio meta / price (İlan Mode) ──────────────────────
+                const metaBar     = document.getElementById('ilanMetaBar');
+                const priceBanner = document.getElementById('ilanPriceBanner');
+                const infoTitle   = document.getElementById('overlayInfoCardTitle');
+
+                if (project.is_portfolio) {
+                    const isKiralik = project.listing_type === 'Kiralık';
+                    const chipClass = isKiralik ? 'kiralik-chip' : 'satilik-chip';
+                    const chipIcon  = isKiralik ? 'fa-key' : 'fa-house-tag';
+                    if (infoTitle) infoTitle.textContent = 'İlan Detayları';
+                    if (metaBar) {
+                        metaBar.style.display = 'flex';
+                        document.getElementById('ilanListingTypeBadge').className = `ilan-meta-chip ${chipClass}`;
+                        document.getElementById('ilanListingTypeBadge').innerHTML = `<i class="fa-solid ${chipIcon}"></i> ${project.listing_type || 'İlan'}`;
+                        document.getElementById('ilanCategoryBadge').className = 'ilan-meta-chip';
+                        document.getElementById('ilanCategoryBadge').innerHTML = `<i class="fa-solid fa-tag"></i> ${project.property_category || 'Gayrimenkul'}`;
+                    }
+                    if (priceBanner && project.price_display) {
+                        priceBanner.style.display = 'flex';
+                        document.getElementById('ilanPriceValue').textContent = project.price_display;
+                        if (project.net_gross_area) {
+                            document.getElementById('ilanAreaLabel').textContent = 'Alan';
+                            document.getElementById('ilanAreaValue').textContent = project.net_gross_area;
+                        } else {
+                            document.getElementById('ilanAreaLabel').textContent = '';
+                            document.getElementById('ilanAreaValue').textContent = '';
+                        }
+                    } else if (priceBanner) {
+                        priceBanner.style.display = 'none';
+                    }
+                } else {
+                    if (infoTitle) infoTitle.textContent = 'Proje Hakkında';
+                    if (metaBar) metaBar.style.display = 'none';
+                    if (priceBanner) priceBanner.style.display = 'none';
+                }
+                
                 const heroSection = document.getElementById('heroSection');
                 if(project.cover_image_url) {
                     heroSection.style.backgroundImage = `url('${encodeURI(project.cover_image_url)}')`;
@@ -2057,7 +2393,13 @@
                 
                 const badges = document.getElementById('overlayBadges');
                 badges.innerHTML = '';
-                if (project.tkgm_verified && project.ada_no && project.parsel_no) {
+                if (project.is_portfolio) {
+                    // For portfolio listings — show listing type + room info badges
+                    const isKir = project.listing_type === 'Kiralık';
+                    badges.innerHTML += `<div class="lux-badge" style="${isKir ? 'border-color:rgba(59,130,246,0.4); color:#60a5fa;' : 'border-color:rgba(34,197,94,0.4); color:#4ade80;'}"><i class="fa-solid ${isKir ? 'fa-key' : 'fa-house-tag'}"></i> ${project.listing_type || 'İlan'}</div>`;
+                    if (project.room_info) badges.innerHTML += `<div class="lux-badge"><i class="fa-solid fa-door-open"></i> ${project.room_info}</div>`;
+                    if (project.property_category) badges.innerHTML += `<div class="lux-badge"><i class="fa-solid fa-tag"></i> ${project.property_category}</div>`;
+                } else if (project.tkgm_verified && project.ada_no && project.parsel_no) {
                     badges.innerHTML += `<div class="lux-badge"><i class="fa-solid fa-check-circle"></i> TKGM Onaylı</div>`;
                     badges.innerHTML += `<div class="lux-badge"><i class="fa-solid fa-map"></i> Ada: ${project.ada_no}</div>`;
                     badges.innerHTML += `<div class="lux-badge"><i class="fa-solid fa-layer-group"></i> Parsel: ${project.parsel_no}</div>`;
@@ -2326,14 +2668,36 @@
             }
 
             renderMarkers(filtered);
+            if (currentEcosystemMode === 'portfoyler') renderPortfolioCards(filtered);
         }
 
         // --- Search Logic ---
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase();
-            const filtered = allProjects.filter(p => p.name.toLowerCase().includes(query) || (p.location && p.location.toLowerCase().includes(query)));
+        // filterProjects() is called by the search input's oninput — it is an alias for search filtering
+        function filterProjects() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!allProjects) return;
+
+            let basePool = currentEcosystemMode === 'projeler'
+                ? allProjects.filter(p => !p.is_portfolio || p.is_portfolio === 0)
+                : allProjects.filter(p => p.is_portfolio === 1);
+
+            if (query.length < 2) {
+                renderMarkers(basePool);
+                if (currentEcosystemMode === 'portfoyler') renderPortfolioCards(basePool);
+                return;
+            }
+
+            const filtered = basePool.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                (p.location && p.location.toLowerCase().includes(query)) ||
+                (p.il && p.il.toLowerCase().includes(query)) ||
+                (p.ilce && p.ilce.toLowerCase().includes(query))
+            );
             renderMarkers(filtered);
-        });
+            if (currentEcosystemMode === 'portfoyler') renderPortfolioCards(filtered);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterProjects);
 
         // --- Chatbot Logic ---
         function handleChatEnter(e) { if(e.key === 'Enter') sendMessage(); }
