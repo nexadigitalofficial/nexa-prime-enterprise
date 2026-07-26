@@ -139,6 +139,48 @@
             width: 92%;
             max-width: 920px;
         }
+        /* Dual Ecosystem Navigation Switcher */
+        .ecosystem-nav-switcher {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(7, 11, 20, 0.88);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 25px rgba(212,175,55,0.3);
+            border-radius: 35px;
+            padding: 4px;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+        .nav-tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 9px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+        }
+        .nav-tab-btn:hover {
+            color: #ffffff;
+            background: rgba(255,255,255,0.06);
+        }
+        .nav-tab-btn.active {
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            color: #070b14;
+            font-weight: 800;
+            box-shadow: 0 4px 18px rgba(212,175,55,0.5);
+            transform: scale(1.02);
+        }
+
         .top-bar {
             width: 100%;
             background: var(--glass-bg);
@@ -1188,6 +1230,16 @@
 
     <!-- Top Search & Touch/Scrollable Action Carousel -->
     <div class="top-container">
+        <!-- Dual Ecosystem Navigation Switcher -->
+        <div class="ecosystem-nav-switcher">
+            <button class="nav-tab-btn active" id="tabMarkaliProjeler" onclick="switchEcosystemTab('projeler')">
+                <i class="fa-solid fa-building-flag"></i> 🏢 MARKALI PROJELER (20)
+            </button>
+            <button class="nav-tab-btn" id="tabBireyselPortfoyler" onclick="switchEcosystemTab('portfoyler')">
+                <i class="fa-solid fa-house-user"></i> 🏠 BİREYSEL PORTFÖYLERİM (10 İlan)
+            </button>
+        </div>
+
         <div class="top-bar" style="position:relative;">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="searchInput" placeholder="Premium portföy veya lokasyon ara (örn. Ankara, Yalıkavak)..." oninput="handlePredictiveSearch(this.value); filterProjects();" autocomplete="off">
@@ -1214,7 +1266,7 @@
             <button class="global-chat-btn" onclick="openGlobalChatModal()" style="background: linear-gradient(135deg, #b45309, #78350f); border: 1px solid var(--primary); color: #ffffff;"><i class="fa-solid fa-robot"></i> 🤖 Genel Portföy Danışmanı</button>
         </div>
 
-        <div class="filter-chips">
+        <div class="filter-chips" id="filterChipsContainer">
             <button class="filter-chip active" id="chip-all" onclick="filterProjectsByTag('all')">Tüm Portföy (20)</button>
             <button class="filter-chip" id="chip-ankara" onclick="filterProjectsByTag('ankara')">📍 Ankara (16)</button>
             <button class="filter-chip" id="chip-sahil" onclick="filterProjectsByTag('sahil')">🌊 Bodrum & Antalya (2)</button>
@@ -1858,16 +1910,71 @@
             setInterval(loadProjects, 15000);
         }
 
+        let currentEcosystemMode = 'projeler';
+
         async function loadProjects() {
             try {
                 const res = await fetch(`${API_BASE}/projects`);
                 const projects = await res.json();
                 allProjects = projects;
                 
-                renderMarkers(allProjects);
+                applyCurrentEcosystemView();
             } catch (err) {
                 console.error("Projeler yüklenemedi:", err);
             }
+        }
+
+        function switchEcosystemTab(tabType) {
+            currentEcosystemMode = tabType;
+            playAudioFx('click');
+
+            const btnProj = document.getElementById('tabMarkaliProjeler');
+            const btnPort = document.getElementById('tabBireyselPortfoyler');
+            const filterContainer = document.getElementById('filterChipsContainer');
+
+            if (tabType === 'projeler') {
+                if(btnProj) btnProj.classList.add('active');
+                if(btnPort) btnPort.classList.remove('active');
+
+                if (filterContainer) {
+                    filterContainer.innerHTML = `
+                        <button class="filter-chip active" id="chip-all" onclick="filterProjectsByTag('all')">Tüm Portföy (20)</button>
+                        <button class="filter-chip" id="chip-ankara" onclick="filterProjectsByTag('ankara')">📍 Ankara (16)</button>
+                        <button class="filter-chip" id="chip-sahil" onclick="filterProjectsByTag('sahil')">🌊 Bodrum & Antalya (2)</button>
+                        <button class="filter-chip" id="chip-eskisehir" onclick="filterProjectsByTag('eskisehir')">🏢 Eskişehir (1)</button>
+                        <button class="filter-chip" id="chip-tkgm" onclick="filterProjectsByTag('tkgm')">✅ TKGM Onaylı (10)</button>
+                    `;
+                }
+            } else {
+                if(btnPort) btnPort.classList.add('active');
+                if(btnProj) btnProj.classList.remove('active');
+
+                if (filterContainer) {
+                    filterContainer.innerHTML = `
+                        <button class="filter-chip active" id="chip-all" onclick="filterProjectsByTag('all')">Tüm İlanlar (10)</button>
+                        <button class="filter-chip" id="chip-kiralik" onclick="filterProjectsByTag('kiralik')">🔑 Kiralık İlanlar (2)</button>
+                        <button class="filter-chip" id="chip-satilik-konut" onclick="filterProjectsByTag('satilik-konut')">🏷️ Satılık Konut (3)</button>
+                        <button class="filter-chip" id="chip-satilik-arsa" onclick="filterProjectsByTag('satilik-arsa')">🚜 Satılık Arsa / Bahçe (3)</button>
+                        <button class="filter-chip" id="chip-satilik-ticari" onclick="filterProjectsByTag('satilik-ticari')">🏢 Satılık Ticari (1)</button>
+                        <button class="filter-chip" id="chip-satilik-villa" onclick="filterProjectsByTag('satilik-villa')">🏰 Satılık Villa (1)</button>
+                    `;
+                }
+            }
+
+            applyCurrentEcosystemView();
+        }
+
+        function applyCurrentEcosystemView() {
+            if (!allProjects) return;
+
+            let filtered = [];
+            if (currentEcosystemMode === 'projeler') {
+                filtered = allProjects.filter(p => !p.is_portfolio || p.is_portfolio === 0);
+            } else {
+                filtered = allProjects.filter(p => p.is_portfolio === 1);
+            }
+
+            renderMarkers(filtered);
         }
 
         function renderMarkers(projectsToRender) {
@@ -1881,23 +1988,34 @@
                 let lat = p.lat || 39.9334;
                 let lng = p.lng || 32.8597;
 
+                const pinColor = p.is_portfolio ? (p.listing_type === 'Kiralık' ? '#3b82f6' : '#22c55e') : 'var(--primary)';
+                const iconClass = p.is_portfolio ? (p.listing_type === 'Kiralık' ? 'fa-key' : 'fa-house-tag') : 'fa-location-dot';
+
                 const customIcon = L.divIcon({
                     className: 'custom-pin',
-                    html: `<div class="pin-pulse"></div><i class="fa-solid fa-location-dot pin-icon"></i>`,
+                    html: `<div class="pin-pulse" style="border-color:${pinColor};"></div><i class="fa-solid ${iconClass} pin-icon" style="color:${pinColor};"></i>`,
                     iconSize: [40, 40],
                     iconAnchor: [20, 40]
                 });
 
                 const locText = p.location || `${p.ilce || ''} / ${p.il || ''}`;
-                const badgeHtml = p.tkgm_verified 
-                    ? `<span class="tooltip-badge tkgm"><i class="fa-solid fa-circle-check"></i> TKGM Onaylı</span>` 
-                    : `<span class="tooltip-badge prestij"><i class="fa-solid fa-sparkles"></i> Prestij Portföy</span>`;
+                
+                let badgeHtml = '';
+                if (p.is_portfolio) {
+                    const priceText = p.price_display ? p.price_display : 'Fiyat Belirtilmedi';
+                    const tagClass = p.listing_type === 'Kiralık' ? 'prestij' : 'tkgm';
+                    badgeHtml = `<span class="tooltip-badge ${tagClass}"><i class="fa-solid fa-tag"></i> ${p.listing_type || 'İlan'}: ${priceText}</span>`;
+                } else {
+                    badgeHtml = p.tkgm_verified 
+                        ? `<span class="tooltip-badge tkgm"><i class="fa-solid fa-circle-check"></i> TKGM Onaylı</span>` 
+                        : `<span class="tooltip-badge prestij"><i class="fa-solid fa-sparkles"></i> Prestij Portföy</span>`;
+                }
 
                 const tooltipHtml = `
                     <div class="tooltip-card">
-                        <div class="tooltip-title"><i class="fa-solid fa-building" style="color:var(--primary);"></i> ${p.name}</div>
+                        <div class="tooltip-title"><i class="fa-solid ${p.is_portfolio ? 'fa-house-user' : 'fa-building'}" style="color:var(--primary);"></i> ${p.name}</div>
                         <div class="tooltip-loc"><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> ${locText}</div>
-                        <div>${badgeHtml}</div>
+                        <div style="margin-top:4px;">${badgeHtml}</div>
                     </div>
                 `;
 
@@ -2169,22 +2287,40 @@
             const chipBtn = document.getElementById(`chip-${tag}`);
             if (chipBtn) chipBtn.classList.add('active');
 
-            let filtered = allProjects;
+            let filtered = currentEcosystemMode === 'projeler' 
+                ? allProjects.filter(p => !p.is_portfolio || p.is_portfolio === 0)
+                : allProjects.filter(p => p.is_portfolio === 1);
+
             if (tag === 'ankara') {
-                filtered = allProjects.filter(p => (p.il && p.il.toLowerCase().includes('ankara')) || (p.location && p.location.toLowerCase().includes('ankara')));
+                filtered = filtered.filter(p => (p.il && p.il.toLowerCase().includes('ankara')) || (p.location && p.location.toLowerCase().includes('ankara')));
                 map.flyTo([39.9000, 32.7500], 10, { duration: 1.5 });
             } else if (tag === 'sahil') {
-                filtered = allProjects.filter(p => {
+                filtered = filtered.filter(p => {
                     const loc = (p.location || '').toLowerCase();
                     return loc.includes('bodrum') || loc.includes('muğla') || loc.includes('antalya') || loc.includes('alanya');
                 });
                 map.flyTo([36.8000, 29.5000], 8, { duration: 1.5 });
             } else if (tag === 'eskisehir') {
-                filtered = allProjects.filter(p => (p.il && p.il.toLowerCase().includes('eskişehir')) || (p.location && p.location.toLowerCase().includes('eskişehir')));
+                filtered = filtered.filter(p => (p.il && p.il.toLowerCase().includes('eskişehir')) || (p.location && p.location.toLowerCase().includes('eskişehir')));
                 map.flyTo([39.7500, 30.5500], 12, { duration: 1.5 });
             } else if (tag === 'tkgm') {
-                filtered = allProjects.filter(p => p.tkgm_verified);
+                filtered = filtered.filter(p => p.tkgm_verified);
                 map.flyTo([39.5000, 31.5000], 6.5, { duration: 1.5 });
+            } else if (tag === 'kiralik') {
+                filtered = filtered.filter(p => p.listing_type === 'Kiralık');
+                map.flyTo([39.9000, 32.7500], 11, { duration: 1.5 });
+            } else if (tag === 'satilik-konut') {
+                filtered = filtered.filter(p => p.listing_type === 'Satılık' && p.property_category && p.property_category.includes('Konut'));
+                map.flyTo([39.9200, 32.7000], 11, { duration: 1.5 });
+            } else if (tag === 'satilik-arsa') {
+                filtered = filtered.filter(p => p.listing_type === 'Satılık' && p.property_category && p.property_category.includes('Arsa'));
+                map.flyTo([40.0000, 32.8000], 9, { duration: 1.5 });
+            } else if (tag === 'satilik-ticari') {
+                filtered = filtered.filter(p => p.listing_type === 'Satılık' && p.property_category && p.property_category.includes('Ticari'));
+                map.flyTo([39.9600, 32.5800], 13, { duration: 1.5 });
+            } else if (tag === 'satilik-villa') {
+                filtered = filtered.filter(p => p.listing_type === 'Satılık' && p.property_category && p.property_category.includes('Villa'));
+                map.flyTo([39.8250, 32.7480], 13, { duration: 1.5 });
             } else {
                 map.flyTo([39.5000, 31.5000], 6.5, { duration: 1.5 });
             }

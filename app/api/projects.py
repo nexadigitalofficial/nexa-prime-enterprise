@@ -19,8 +19,16 @@ async def audit_all_locations(db: aiosqlite.Connection = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Konum denetimi hatası: {str(e)}")
 
 @router.get("")
-async def get_projects(db: aiosqlite.Connection = Depends(get_db)):
-    async with db.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
+async def get_projects(is_portfolio: Optional[str] = None, db: aiosqlite.Connection = Depends(get_db)):
+    if is_portfolio is not None and is_portfolio.lower() != 'all':
+        val = 1 if str(is_portfolio).lower() in ['1', 'true', 'portfolio'] else 0
+        query = "SELECT * FROM projects WHERE COALESCE(is_portfolio, 0) = ? ORDER BY id DESC"
+        params = (val,)
+    else:
+        query = "SELECT * FROM projects ORDER BY id DESC"
+        params = ()
+
+    async with db.execute(query, params) as cursor:
         projects = await cursor.fetchall()
         
     result = []
