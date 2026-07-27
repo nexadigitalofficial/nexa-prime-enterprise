@@ -6,7 +6,26 @@ from app.services.gemini_service import generate_content_with_fallback
 logger = logging.getLogger("nexa.rag")
 
 async def get_project_context(db: aiosqlite.Connection, project_id: int) -> str:
-    """Retrieve all chunk texts for a specific project to build single-project RAG context"""
+    """Retrieve project/portfolio metadata & chunk texts to build enriched single-project RAG context"""
+    async with db.execute("SELECT * FROM projects WHERE id = ?", (project_id,)) as p_cursor:
+        proj_row = await p_cursor.fetchone()
+        
+    meta_text = ""
+    if proj_row:
+        p = dict(proj_row)
+        ptype = f"BİREYSEL PORTFÖY İLANI ({p.get('listing_type') or 'İlan'})" if p.get('is_portfolio') else "MARKALI PROJE"
+        meta_text = f"""=== PORTFÖY / PROJE METADATA BİLGİLERİ ===
+[PROJE / İLAN ADI]: {p.get('name')}
+[EKOSİSTEM KATEGORİSİ]: {ptype}
+[GAYRİMENKUL TİPİ / KAT]: {p.get('property_category') or 'Belirtilmedi'}
+[FİYAT / TALEP BEDELİ]: {p.get('price_display') or 'Fiyat Belirtilmedi'}
+[ODA VE YAPISAL BİLGİ]: {p.get('room_info') or 'Belirtilmedi'}
+[NET / BRÜT ALAN]: {p.get('net_gross_area') or 'Belirtilmedi'}
+[LOKASYON / ADRES]: {p.get('location') or ''} ({p.get('ilce') or ''} / {p.get('il') or ''})
+[ADA / PARSEL]: Ada: {p.get('ada_no') or '-'}, Parsel: {p.get('parsel_no') or '-'} (TKGM Onay: {'Evet' if p.get('tkgm_verified') else 'Hayır'})
+[AÇIKLAMA ÖZETİ]: {p.get('description') or 'Açıklama girilmedi.'}
+===========================================\n"""
+
     async with db.execute("""
         SELECT d.category, d.title, dc.chunk_text 
         FROM document_chunks dc
@@ -15,19 +34,20 @@ async def get_project_context(db: aiosqlite.Connection, project_id: int) -> str:
     """, (project_id,)) as cursor:
         rows = await cursor.fetchall()
         
-    if not rows:
-        return ""
-        
     context_parts = []
+    if meta_text:
+        context_parts.append(meta_text)
+
     for row in rows:
         context_parts.append(f"[{row['category']} - {row['title']}]: {row['chunk_text']}")
         
     return "\n\n".join(context_parts)
 
 async def get_global_portfolio_context(db: aiosqlite.Connection) -> str:
-    """Retrieve full portfolio summary across all projects for cross-project global chat"""
+    """Retrieve full portfolio summary across all projects & portfolio listings for cross-project global chat"""
     async with db.execute("""
-        SELECT id, name, location, il, ilce, mahalle, description, ada_no, parsel_no, tkgm_verified, created_at 
+        SELECT id, name, location, il, ilce, mahalle, description, ada_no, parsel_no, tkgm_verified,
+               is_portfolio, listing_type, property_category, price_display, room_info, net_gross_area
         FROM projects ORDER BY id ASC
     """) as cursor:
         projects = await cursor.fetchall()
@@ -39,8 +59,11 @@ async def get_global_portfolio_context(db: aiosqlite.Connection) -> str:
     for proj in projects:
         p_id = proj["id"]
         p_name = proj["name"]
+        p_type = f"BİREYSEL PORTFÖY ({proj['listing_type'] or 'İlan'})" if proj["is_portfolio"] else "MARKALI PROJE"
+        p_price = proj["price_display"] or "Fiyat Belirtilmedi"
         p_loc = proj["location"] or f"{proj['ilce'] or ''} / {proj['il'] or ''}"
         p_desc = proj["description"] or "Açıklama belirtilmemiş."
+        p_specs = f"Kategori: {proj['property_category'] or '-'}, Oda: {proj['room_info'] or '-'}, Alan: {proj['net_gross_area'] or '-'}"
         
         # Get document chunks for this project (up to 10 key chunks per project to avoid token explosion)
         async with db.execute("""
@@ -57,8 +80,9 @@ async def get_global_portfolio_context(db: aiosqlite.Connection) -> str:
             chunk_texts = "  • (Henüz taranmış özel belge bulunmuyor)"
 
         proj_summary = f"""---
-PROJE ID: {p_id}
-PROJE ADI: {p_name}
+İLAN / PROJE ID: {p_id} [{p_type}]
+AD / UNVAN: {p_name}
+FİYAT: {p_price} | DİĞER ÖZELLİKLER: {p_specs}
 LOKASYON: {p_loc} (İl: {proj['il'] or '-'}, İlçe: {proj['ilce'] or '-'}, Mahalle: {proj['mahalle'] or '-'})
 ADA/PARSEL: Ada {proj['ada_no'] or '-'}, Parsel {proj['parsel_no'] or '-'} (TKGM Onay: {'Evet' if proj['tkgm_verified'] else 'Hayır'})
 AÇIKLAMA: {p_desc}
@@ -71,7 +95,8 @@ AÇIKLAMA: {p_desc}
 async def generate_offline_db_summary(db: aiosqlite.Connection, user_message: str) -> str:
     """Fail-Safe Direct Database Summary Generator when Cloud AI quotas are completely exhausted"""
     async with db.execute("""
-        SELECT id, name, location, il, ilce, ada_no, parsel_no, tkgm_verified, description 
+        SELECT id, name, location, il, ilce, ada_no, parsel_no, tkgm_verified, description,
+               is_portfolio, listing_type, price_display 
         FROM projects ORDER BY id ASC
     """) as cursor:
         projects = await cursor.fetchall()
@@ -82,10 +107,10 @@ async def generate_offline_db_summary(db: aiosqlite.Connection, user_message: st
     rows_html = []
     for p in projects:
         p_loc = p["location"] or f"{p['ilce'] or ''} / {p['il'] or ''}"
-        tkgm = "✅ TKGM Onaylı" if p["tkgm_verified"] else "⏳ İşleniyor"
-        ada_parsel = f"Ada: {p['ada_no'] or '-'} / Parsel: {p['parsel_no'] or '-'}"
-        desc = (p["description"] or "-")[:120] + "..."
-        rows_html.append(f"| **#{p['id']} {p['name']}** | {p_loc} | {ada_parsel} | {tkgm} | {desc} |")
+        ptype = f"{'🔑 Kiralık' if p['listing_type'] == 'Kiralık' else '🏷️ Satılık'}" if p["is_portfolio"] else "🏢 Proje"
+        price = p["price_display"] or "-"
+        desc = (p["description"] or "-")[:100] + "..."
+        rows_html.append(f"| **#{p['id']} {p['name']}** | {ptype} | **{price}** | {p_loc} | {desc} |")
 
     table_str = "\n".join(rows_html)
     return f"""> [!NOTE]
@@ -93,11 +118,12 @@ async def generate_offline_db_summary(db: aiosqlite.Connection, user_message: st
 
 ### 🏢 NEXA PRIME Portföy Özeti ve Proje Listesi
 
-Sisteminizde kayıtlı **{len(projects)} adet premium proje** bulunmaktadır:
+Sisteminizde kayıtlı **{len(projects)} adet premium proje ve portföy ilanı** bulunmaktadır:
 
-| Proje Adı | Lokasyon | Ada / Parsel | TKGM Durumu | Açıklama Özet |
-| :--- | :--- | :--- | :---: | :--- |
+| Proje / İlan Adı | Ekosistem Tipi | Fiyat / Bedel | Lokasyon | Açıklama Özet |
+| :--- | :---: | :---: | :--- | :--- |
 {table_str}
+
 
 *Not: Detaylı AI fiyat ve teslimat analizleri için birkaç dakika sonra sorunuzu tekrarlayabilirsiniz.*
 """

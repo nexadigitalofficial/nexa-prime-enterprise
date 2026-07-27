@@ -70,7 +70,9 @@ async def get_project_detail(project_id: int, db: aiosqlite.Connection = Depends
     docs = []
     for d in docs_raw:
         d_dict = dict(d)
-        furl = (d_dict.get('file_url') or '')
+        furl = (d_dict.get('file_url') or '').strip()
+        if not furl or furl == '#':
+            continue
         fname_lower = furl.split('/')[-1].lower()
         # For portfolio listings: skip thumbnail and system files
         if is_portfolio_project:

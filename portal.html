@@ -2205,7 +2205,13 @@
                 }
             }
 
-            applyCurrentEcosystemView();
+            // Re-evaluate search or apply view when switching tabs
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && searchInput.value.trim().length >= 2) {
+                filterProjects();
+            } else {
+                applyCurrentEcosystemView();
+            }
         }
 
         function applyCurrentEcosystemView() {
@@ -3116,10 +3122,13 @@ Bu ilan hakkında her türlü sorunuzu yanıtlayabilirim — fiyat analizi, çev
             const selects = [document.getElementById('compareSelect1'), document.getElementById('compareSelect2'), document.getElementById('compareSelect3')];
             selects.forEach((select, idx) => {
                 if (!select) return;
-                select.innerHTML = '<option value="">🏢 Lüks Proje Seçiniz...</option>';
+                select.innerHTML = '<option value="">🏢 Lüks Proje veya Portföy İlanı Seçiniz...</option>';
                 allProjects.forEach(p => {
                     const loc = p.il ? p.il : (p.location || 'Ankara');
-                    const badge = p.tkgm_verified ? '✅ TKGM' : '👑 PRESTİJ';
+                    let badge = p.tkgm_verified ? '✅ TKGM' : '👑 PRESTİJ';
+                    if (p.is_portfolio) {
+                        badge = p.listing_type === 'Kiralık' ? '🔑 KIRALIK' : '🏷️ SATILIK';
+                    }
                     select.innerHTML += `<option value="${p.id}">${badge} | ${p.name} — (📍 ${loc})</option>`;
                 });
                 if (allProjects[idx]) {
@@ -3151,13 +3160,27 @@ Bu ilan hakkında her türlü sorunuzu yanıtlayabilirim — fiyat analizi, çev
                 const res = await fetch(`${API_BASE}/projects/${projId}`);
                 const p = await res.json();
                 const cover = p.cover_image_url ? encodeURI(p.cover_image_url) : '/static/documents/nexa_prime_cover.jpg';
-                const badge = p.tkgm_verified ? `<span class="tooltip-badge tkgm"><i class="fa-solid fa-check-circle"></i> TKGM Onaylı</span>` : `<span class="tooltip-badge prestij"><i class="fa-solid fa-sparkles"></i> Prestij Portföy</span>`;
+                
+                let badge = p.tkgm_verified 
+                    ? `<span class="tooltip-badge tkgm"><i class="fa-solid fa-check-circle"></i> TKGM Onaylı</span>` 
+                    : `<span class="tooltip-badge prestij"><i class="fa-solid fa-sparkles"></i> Prestij Portföy</span>`;
+                
+                if (p.is_portfolio) {
+                    const isKir = p.listing_type === 'Kiralık';
+                    const tagStyle = isKir ? 'background:rgba(59,130,246,0.2); color:#60a5fa; border-color:rgba(59,130,246,0.4);' : 'background:rgba(34,197,94,0.2); color:#4ade80; border-color:rgba(34,197,94,0.4);';
+                    badge = `<span class="tooltip-badge" style="${tagStyle}"><i class="fa-solid ${isKir ? 'fa-key' : 'fa-tag'}"></i> ${p.listing_type || 'İlan'} — ${p.price_display || '—'}</span>`;
+                }
+
+                const specsHtml = p.is_portfolio && (p.room_info || p.net_gross_area) 
+                    ? `<div style="font-size:11.5px; color:var(--primary); font-weight:700; margin-top:2px;"><i class="fa-solid fa-house"></i> ${p.room_info || ''} ${p.net_gross_area ? '• ' + p.net_gross_area : ''}</div>` 
+                    : '';
                 
                 card.innerHTML = `
                     <img src="${cover}" alt="${p.name}">
                     <h4 style="margin:0; color:#fff; font-size:16px;">${p.name}</h4>
                     <div style="font-size:13px; color:#cbd5e1;"><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> ${p.location}</div>
                     <div>${badge}</div>
+                    ${specsHtml}
                     <div style="font-size:12.5px; color:#cbd5e1; line-height:1.5;">${p.description ? p.description.substring(0, 110) + '...' : 'Detaylar analiz ediliyor...'}</div>
                     <div style="margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:12px; color:var(--primary); font-weight:600;"><i class="fa-solid fa-folder-open"></i> ${p.documents ? p.documents.length : 0} Belge</span>
@@ -3336,7 +3359,12 @@ Bu ilan hakkında her türlü sorunuzu yanıtlayabilirim — fiyat analizi, çev
         function formatPrice(amount) {
             if (amount === null || amount === undefined || amount === '') return 'Fiyat Belirtilmedi';
             let num = amount;
+            let suffix = '';
             if (typeof amount === 'string') {
+                if (amount.includes('/ ay')) suffix = ' / ay';
+                else if (amount.includes('/ yıl')) suffix = ' / yıl';
+                else if (amount.includes('/ m²')) suffix = ' / m²';
+
                 const cleaned = amount.replace(/[^\d]/g, '');
                 num = parseFloat(cleaned);
             }
@@ -3344,7 +3372,7 @@ Bu ilan hakkında her türlü sorunuzu yanıtlayabilirim — fiyat analizi, çev
             const rate = fxRates[currentCurrency] || 1;
             const sym = fxSymbols[currentCurrency] || '₺';
             const converted = Math.round(num * rate);
-            return `${converted.toLocaleString('tr-TR')} ${sym}`;
+            return `${converted.toLocaleString('tr-TR')} ${sym}${suffix}`;
         }
 
         // --- Voice Recognition Logic ---
